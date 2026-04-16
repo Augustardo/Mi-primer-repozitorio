@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pool Amorch</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #0d0d0f;
+  --surface: #141418;
+  --surface2: #1c1c22;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --accent: #c8f04a;
+  --accent2: #a8d038;
+  --a-color: #7b6ef6;
+  --a-light: rgba(123,110,246,0.12);
+  --s-color: #f0875a;
+  --s-light: rgba(240,135,90,0.12);
+  --text: #f0f0ef;
+  --text2: rgba(240,240,239,0.55);
+  --text3: rgba(240,240,239,0.28);
+  --green: #4ade80;
+  --green-light: rgba(74,222,128,0.1);
+  --font: 'Syne', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* noise overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+.app {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 16px 80px;
+  position: relative;
+  z-index: 1;
+}
+
+/* HEADER */
+.header {
+  padding: 40px 0 28px;
+  position: relative;
+}
+.header-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.header h1 {
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--text);
+}
+.header h1 span {
+  color: var(--accent);
+}
+.header-sub {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text3);
+  margin-top: 8px;
+  letter-spacing: 0.05em;
+}
+.header-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-right: 6px;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* TABS */
+.tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3px;
+  margin-bottom: 24px;
+}
+.tab {
+  flex: 1;
+  padding: 9px 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  color: var(--text2);
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  transition: all 0.18s;
+  letter-spacing: 0.01em;
+}
+.tab:hover { color: var(--text); }
+.tab.active {
+  background: var(--surface2);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+.view { display: none; }
+.view.active { display: block; }
+
+/* CARDS */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 12px;
+}
+.card-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 16px;
+}
+
+/* SCOREBOARD */
+.scoreboard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 20px;
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  align-items: center;
+}
+.player { text-align: center; }
+.player-avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 800;
+  margin: 0 auto 10px;
+  position: relative;
+}
+.player-avatar.av-a { background: var(--a-light); color: var(--a-color); border: 1px solid rgba(123,110,246,0.25); }
+.player-avatar.av-s { background: var(--s-light); color: var(--s-color); border: 1px solid rgba(240,135,90,0.25); }
+.player-name { font-size: 14px; font-weight: 600; color: var(--text2); letter-spacing: 0.02em; }
+.player-wins { font-size: 48px; font-weight: 800; line-height: 1; margin: 6px 0 4px; letter-spacing: -0.04em; }
+.wins-a { color: var(--a-color); }
+.wins-s { color: var(--s-color); }
+.player-streak {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  min-height: 16px;
+}
+.vs-sep {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text3);
+  font-weight: 500;
+}
+
+/* YEAR NAV */
+.year-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  margin-bottom: 12px;
+}
+.year-nav-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text2); font-size: 18px; padding: 2px 6px;
+  transition: color 0.15s;
+}
+.year-nav-btn:hover { color: var(--accent); }
+.year-nav-label {
+  font-size: 15px; font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text);
+}
+
+/* PRIZES */
+.prizes { display: flex; flex-direction: column; gap: 8px; }
+.prize {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  transition: border-color 0.15s;
+}
+.prize.active {
+  border-color: rgba(200,240,74,0.3);
+  background: rgba(200,240,74,0.05);
+}
+.prize.won {
+  opacity: 0.45;
+}
+.prize-icon-wrap {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.prize.active .prize-icon-wrap {
+  background: rgba(200,240,74,0.1);
+  border-color: rgba(200,240,74,0.25);
+}
+.prize-info { flex: 1; }
+.prize-name {
+  font-size: 14px; font-weight: 600;
+  color: var(--text);
+}
+.prize.won .prize-name { text-decoration: line-through; }
+.prize-sub {
+  font-family: var(--mono);
+  font-size: 11px; color: var(--text3); margin-top: 2px;
+}
+.prize-active-badge {
+  font-family: var(--mono);
+  font-size: 10px; font-weight: 500;
+  color: var(--accent);
+  background: rgba(200,240,74,0.1);
+  border: 1px solid rgba(200,240,74,0.2);
+  padding: 2px 8px; border-radius: 99px;
+  white-space: nowrap;
+}
+
+/* STATS */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.stat-item {
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  padding: 14px 10px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+.stat-label {
+  font-family: var(--mono);
+  font-size: 10px; color: var(--text3);
+  margin-bottom: 6px; letter-spacing: 0.05em;
+}
+.stat-value { font-size: 22px; font-weight: 800; color: var(--text); }
+
+/* WINRATE */
+.winrate-section { margin-top: 4px; }
+.winrate-title {
+  font-family: var(--mono);
+  font-size: 10px; color: var(--text3);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.winrate-row { margin-bottom: 12px; }
+.winrate-header {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 6px;
+}
+.winrate-name { font-size: 13px; font-weight: 600; color: var(--text2); }
+.winrate-nums { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+.winrate-track {
+  height: 8px; border-radius: 99px;
+  background: var(--surface2);
+  overflow: hidden; display: flex;
+  border: 1px solid var(--border);
+}
+.wr-seg { height: 100%; }
+.wr-r { background: #d4922e; }
+.wr-l { background: var(--a-color); }
+.legend {
+  display: flex; gap: 16px; margin-top: 10px;
+}
+.legend-item {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--mono); font-size: 11px; color: var(--text3);
+}
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* HISTORY */
+.history { display: flex; flex-direction: column; gap: 4px; }
+.session-header {
+  font-family: var(--mono);
+  font-size: 10px; color: var(--text3);
+  letter-spacing: 0.08em;
+  padding: 10px 0 4px;
+  text-transform: uppercase;
+}
+.match-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+.match-winner { font-size: 13px; font-weight: 600; color: var(--text); }
+.match-detail { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-top: 2px; }
+.pill {
+  font-family: var(--mono);
+  font-size: 11px; padding: 3px 10px;
+  border-radius: 99px; font-weight: 500;
+  flex-shrink: 0;
+}
+.pill-a { background: var(--a-light); color: var(--a-color); border: 1px solid rgba(123,110,246,0.2); }
+.pill-s { background: var(--s-light); color: var(--s-color); border: 1px solid rgba(240,135,90,0.2); }
+.empty-state {
+  text-align: center; padding: 40px 20px;
+  font-family: var(--mono); font-size: 12px; color: var(--text3);
+}
+
+/* FORMS - CARGAR */
+.game-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 12px;
+}
+.game-title {
+  font-family: var(--mono);
+  font-size: 10px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.form-field { margin-bottom: 16px; }
+.form-label { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 8px; display: block; }
+.radio-group { display: flex; gap: 8px; }
+.radio-opt {
+  flex: 1; border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 11px 8px; text-align: center;
+  cursor: pointer; font-size: 13px; font-weight: 600;
+  color: var(--text2); background: var(--surface2);
+  transition: all 0.15s; user-select: none;
+}
+.radio-opt:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
+.radio-opt.sel-a { background: var(--a-light); border-color: rgba(123,110,246,0.4); color: var(--a-color); }
+.radio-opt.sel-s { background: var(--s-light); border-color: rgba(240,135,90,0.4); color: var(--s-color); }
+.radio-opt.sel-r { background: rgba(212,146,46,0.12); border-color: rgba(212,146,46,0.4); color: #d4922e; }
+.radio-opt.sel-l { background: var(--a-light); border-color: rgba(123,110,246,0.4); color: var(--a-color); }
+
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+.toggle-label { font-size: 13px; color: var(--text2); }
+.toggle { position: relative; width: 38px; height: 21px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 99px; cursor: pointer; transition: .2s;
+}
+.toggle-slider:before {
+  content: ''; position: absolute;
+  width: 13px; height: 13px;
+  left: 3px; top: 3px;
+  background: var(--text3); border-radius: 50%; transition: .2s;
+}
+.toggle input:checked + .toggle-slider { background: rgba(200,240,74,0.15); border-color: rgba(200,240,74,0.4); }
+.toggle input:checked + .toggle-slider:before { transform: translateX(17px); background: var(--accent); }
+
+.select-field {
+  width: 100%; padding: 11px 14px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-family: var(--font); font-weight: 500;
+  background: var(--surface2); color: var(--text);
+  margin-bottom: 0; outline: none;
+  transition: border-color 0.15s;
+}
+.select-field:focus { border-color: rgba(200,240,74,0.4); }
+
+/* BUTTONS */
+.btn-primary {
+  width: 100%; padding: 13px;
+  border-radius: var(--radius-sm); border: none;
+  background: var(--accent); color: #0d0d0f;
+  font-size: 14px; font-weight: 800;
+  font-family: var(--font); cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: all 0.15s;
+  margin-bottom: 8px;
+}
+.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+.btn-secondary {
+  width: 100%; padding: 11px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border2);
+  background: transparent; color: var(--text2);
+  font-size: 13px; font-weight: 600;
+  font-family: var(--font); cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 8px;
+}
+.btn-secondary:hover { background: var(--surface2); color: var(--text); }
+
+/* CONFIG */
+.config-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+}
+.config-item-icon { font-size: 18px; flex-shrink: 0; }
+.config-item-info { flex: 1; }
+.config-item-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.config-item-sub { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-top: 2px; }
+.icon-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text3); font-size: 15px; padding: 4px 6px;
+  transition: color 0.15s; border-radius: 6px;
+}
+.icon-btn:hover { color: var(--text); background: var(--border); }
+.status-pill {
+  font-family: var(--mono); font-size: 10px;
+  padding: 3px 8px; border-radius: 99px;
+  font-weight: 500; flex-shrink: 0;
+}
+.sp-active { background: rgba(74,222,128,0.1); color: var(--green); border: 1px solid rgba(74,222,128,0.25); }
+.sp-pending { background: var(--surface); color: var(--text3); border: 1px solid var(--border); }
+.sp-won { background: var(--a-light); color: var(--a-color); border: 1px solid rgba(123,110,246,0.2); }
+
+.text-input {
+  width: 100%; padding: 10px 12px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-family: var(--font);
+  background: var(--surface2); color: var(--text);
+  margin-bottom: 8px; outline: none;
+  transition: border-color 0.15s;
+}
+.text-input:focus { border-color: rgba(200,240,74,0.4); }
+
+.inline-form {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px; margin-bottom: 8px;
+}
+.inline-form-title {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--accent); letter-spacing: 0.1em;
+  text-transform: uppercase; margin-bottom: 12px;
+}
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--accent); color: #0d0d0f;
+  padding: 10px 20px; border-radius: 99px;
+  font-size: 13px; font-weight: 700;
+  opacity: 0; transition: all 0.25s;
+  pointer-events: none; z-index: 999;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* edit inline */
+.edit-inline { display: flex; align-items: center; gap: 6px; }
+.edit-inline input { flex: 1; margin-bottom: 0; }
+.edit-inline .btn-ok {
+  padding: 8px 12px; border: none;
+  background: var(--accent); color: #0d0d0f;
+  border-radius: var(--radius-sm); font-size: 12px;
+  font-weight: 700; font-family: var(--font); cursor: pointer;
+  white-space: nowrap;
+}
+
+.divider { height: 1px; background: var(--border); margin: 4px 0 12px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-eyebrow"><span class="header-dot"></span>temporada activa</div>
+    <h1>Pool <span>Amorch</span></h1>
+    <div class="header-sub" id="header-sub">cargando...</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('torneo',this)">Torneo</button>
+    <button class="tab" onclick="switchTab('cargar',this)">Cargar</button>
+    <button class="tab" onclick="switchTab('config',this)">Configurar</button>
+  </div>
+
+  <!-- TORNEO -->
+  <div id="view-torneo" class="view active">
+    <div class="year-nav">
+      <button class="year-nav-btn" onclick="changeYear(-1)">&#8592;</button>
+      <span class="year-nav-label" id="year-label">2025</span>
+      <button class="year-nav-btn" onclick="changeYear(1)">&#8594;</button>
+    </div>
+
+    <div class="scoreboard">
+      <div class="player">
+        <div class="player-avatar av-a" id="av-a">A</div>
+        <div class="player-name" id="name-a">Augusto</div>
+        <div class="player-wins wins-a" id="wins-a">0</div>
+        <div class="player-streak" id="streak-a"></div>
+      </div>
+      <div class="vs-sep">VS</div>
+      <div class="player">
+        <div class="player-avatar av-s" id="av-s">S</div>
+        <div class="player-name" id="name-s">Sira</div>
+        <div class="player-wins wins-s" id="wins-s">0</div>
+        <div class="player-streak" id="streak-s"></div>
+      </div>
+    </div>
+
+    <div class="card" id="prizes-section" style="display:none;">
+      <div class="card-title">Torneos del año</div>
+      <div class="prizes" id="prizes-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Estadísticas</div>
+      <div class="stats-grid">
+        <div class="stat-item"><div class="stat-label">Partidas</div><div class="stat-value" id="stat-total">0</div></div>
+        <div class="stat-item"><div class="stat-label" id="stat-la">Win% Aug</div><div class="stat-value" id="stat-pa">0%</div></div>
+        <div class="stat-item"><div class="stat-label" id="stat-ls">Win% Sira</div><div class="stat-value" id="stat-ps">0%</div></div>
+      </div>
+      <div class="winrate-section" id="wr-section" style="display:none;">
+        <div class="winrate-title">Winrate por tipo de bola</div>
+        <div class="winrate-row">
+          <div class="winrate-header">
+            <span class="winrate-name" id="wr-na">Augusto</span>
+            <span class="winrate-nums" id="wr-numa"></span>
+          </div>
+          <div class="winrate-track">
+            <div class="wr-seg wr-r" id="wr-ar" style="width:50%"></div>
+            <div class="wr-seg wr-l" id="wr-al" style="width:50%"></div>
+          </div>
+        </div>
+        <div class="winrate-row" style="margin-top:10px;">
+          <div class="winrate-header">
+            <span class="winrate-name" id="wr-ns">Sira</span>
+            <span class="winrate-nums" id="wr-nums"></span>
+          </div>
+          <div class="winrate-track">
+            <div class="wr-seg wr-r" id="wr-sr" style="width:50%"></div>
+            <div class="wr-seg wr-l" id="wr-sl" style="width:50%"></div>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#d4922e"></div>Rayadas</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--a-color)"></div>Lisas</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Historial</div>
+      <div class="history" id="history-list"></div>
+    </div>
+  </div>
+
+  <!-- CARGAR -->
+  <div id="view-cargar" class="view">
+    <div class="game-block">
+      <div class="game-title">Partida 1</div>
+      <div class="form-field">
+        <span class="form-label">¿Quién ganó?</span>
+        <div class="radio-group">
+          <div class="radio-opt" id="w1-a" onclick="sel('w1','a')">Augusto</div>
+          <div class="radio-opt" id="w1-s" onclick="sel('w1','s')">Sira</div>
+        </div>
+      </div>
+      <div>
+        <div class="toggle-row">
+          <span class="toggle-label">Registrar tipo de bola</span>
+          <label class="toggle"><input type="checkbox" id="track1" checked onchange="toggleBalls(1)"><span class="toggle-slider"></span></label>
+        </div>
+        <div id="balls1-inputs">
+          <div class="form-field">
+            <span class="form-label" id="bl1a-label">Bolas de Augusto</span>
+            <div class="radio-group">
+              <div class="radio-opt" id="b1a-r" onclick="selBall(1,'a','r')">Rayadas</div>
+              <div class="radio-opt" id="b1a-l" onclick="selBall(1,'a','l')">Lisas</div>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-label" id="bl1s-label">Bolas de Sira</span>
+            <div class="radio-group">
+              <div class="radio-opt" id="b1s-r" onclick="selBall(1,'s','r')">Rayadas</div>
+              <div class="radio-opt" id="b1s-l" onclick="selBall(1,'s','l')">Lisas</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="game-block">
+      <div class="game-title">Partida 2</div>
+      <div class="form-field">
+        <span class="form-label">¿Quién ganó?</span>
+        <div class="radio-group">
+          <div class="radio-opt" id="w2-a" onclick="sel('w2','a')">Augusto</div>
+          <div class="radio-opt" id="w2-s" onclick="sel('w2','s')">Sira</div>
+        </div>
+      </div>
+      <div>
+        <div class="toggle-row">
+          <span class="toggle-label">Registrar tipo de bola</span>
+          <label class="toggle"><input type="checkbox" id="track2" checked onchange="toggleBalls(2)"><span class="toggle-slider"></span></label>
+        </div>
+        <div id="balls2-inputs">
+          <div class="form-field">
+            <span class="form-label" id="bl2a-label">Bolas de Augusto</span>
+            <div class="radio-group">
+              <div class="radio-opt" id="b2a-r" onclick="selBall(2,'a','r')">Rayadas</div>
+              <div class="radio-opt" id="b2a-l" onclick="selBall(2,'a','l')">Lisas</div>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-label" id="bl2s-label">Bolas de Sira</span>
+            <div class="radio-group">
+              <div class="radio-opt" id="b2s-r" onclick="selBall(2,'s','r')">Rayadas</div>
+              <div class="radio-opt" id="b2s-l" onclick="selBall(2,'s','l')">Lisas</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px;">
+      <div class="card-title">Torneo al que pertenece</div>
+      <select class="select-field" id="session-tournament"></select>
+    </div>
+
+    <button class="btn-primary" onclick="saveSession()">Guardar sesión</button>
+  </div>
+
+  <!-- CONFIG -->
+  <div id="view-config" class="view">
+    <div class="card">
+      <div class="card-title">Jugadores</div>
+      <div style="margin-bottom:8px;">
+        <span class="form-label">Jugador 1</span>
+        <input class="text-input" id="cfg-na" value="Augusto" />
+      </div>
+      <div style="margin-bottom:12px;">
+        <span class="form-label">Jugador 2</span>
+        <input class="text-input" id="cfg-ns" value="Sira" />
+      </div>
+      <button class="btn-primary" onclick="savePlayers()">Guardar nombres</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Años del torneo</div>
+      <div id="years-list"></div>
+      <button class="btn-secondary" onclick="addYear()">+ Agregar año</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Torneos de <span id="cfg-year">2025</span></div>
+      <div id="tournaments-list"></div>
+      <button class="btn-secondary" onclick="showAddTournament()">+ Agregar torneo</button>
+      <div id="add-tournament-form" style="display:none;">
+        <div class="inline-form">
+          <div class="inline-form-title">Nuevo torneo</div>
+          <input class="text-input" id="new-t-name" placeholder="Nombre del torneo" />
+          <input class="text-input" id="new-t-icon" placeholder="Emoji del ícono (ej: 🏆)" />
+          <input class="text-input" id="new-t-desc" placeholder="Descripción (ej: Termina en junio)" />
+          <select class="select-field" id="new-t-status" style="margin-bottom:12px;">
+            <option value="pending">Próximo</option>
+            <option value="active">En curso</option>
+            <option value="won-a">Ganado por Augusto</option>
+            <option value="won-s">Ganado por Sira</option>
+          </select>
+          <button class="btn-primary" onclick="saveNewTournament()">Guardar</button>
+          <button class="btn-secondary" onclick="document.getElementById('add-tournament-form').style.display='none'">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var formSel = {};
+var trackBalls = {1:true, 2:true};
+var viewYear;
+
+var defaultData = {
+  players: {a:'Augusto', s:'Sira'},
+  years: {'2025': {tournaments:[], sessions:[]}},
+  currentYear: '2025'
+};
+
+function loadData() {
+  try {
+    var r = localStorage.getItem('pool-amorch');
+    return r ? JSON.parse(r) : JSON.parse(JSON.stringify(defaultData));
+  } catch(e) { return JSON.parse(JSON.stringify(defaultData)); }
+}
+
+function saveData(d) {
+  localStorage.setItem('pool-amorch', JSON.stringify(d));
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2200);
+}
+
+function init() {
+  var data = loadData();
+  viewYear = data.currentYear || '2025';
+  renderAll(data);
+}
+
+function updatePlayerLabels(data) {
+  ['w1-a','w2-a'].forEach(function(id){ var el=document.getElementById(id); if(el) el.textContent=data.players.a; });
+  ['w1-s','w2-s'].forEach(function(id){ var el=document.getElementById(id); if(el) el.textContent=data.players.s; });
+  ['bl1a-label','bl2a-label'].forEach(function(id){ var el=document.getElementById(id); if(el) el.textContent='Bolas de '+data.players.a; });
+  ['bl1s-label','bl2s-label'].forEach(function(id){ var el=document.getElementById(id); if(el) el.textContent='Bolas de '+data.players.s; });
+  var nt = document.getElementById('new-t-status');
+  if(nt){ nt.options[2].text='Ganado por '+data.players.a; nt.options[3].text='Ganado por '+data.players.s; }
+}
+
+function toggleBalls(game) {
+  var checked = document.getElementById('track'+game).checked;
+  trackBalls[game] = checked;
+  document.getElementById('balls'+game+'-inputs').style.display = checked ? 'block' : 'none';
+  if(!checked){ formSel['b'+game+'a']=null; formSel['b'+game+'s']=null; }
+}
+
+function renderAll(data) {
+  document.getElementById('header-sub').textContent = 'temporada ' + viewYear;
+  document.getElementById('year-label').textContent = viewYear;
+  document.getElementById('cfg-year').textContent = viewYear;
+  document.getElementById('cfg-na').value = data.players.a;
+  document.getElementById('cfg-ns').value = data.players.s;
+  updatePlayerLabels(data);
+
+  var yearData = data.years[viewYear] || {tournaments:[], sessions:[]};
+  var sessions = yearData.sessions || [];
+
+  var winsA=0, winsS=0;
+  var rWA=0,rTA=0,lWA=0,lTA=0,rWS=0,rTS=0,lWS=0,lTS=0;
+  var hasBall = false;
+  var allMatches = [];
+
+  sessions.forEach(function(s){
+    s.matches.forEach(function(m){
+      allMatches.push(m);
+      if(m.winner==='a') winsA++; else winsS++;
+      if(m.ballA && m.ballS){
+        hasBall=true;
+        if(m.ballA==='r'){rTA++;if(m.winner==='a')rWA++;}
+        if(m.ballA==='l'){lTA++;if(m.winner==='a')lWA++;}
+        if(m.ballS==='r'){rTS++;if(m.winner==='s')rWS++;}
+        if(m.ballS==='l'){lTS++;if(m.winner==='s')lWS++;}
+      }
+    });
+  });
+
+  var streakPlayer='', curStreak=0;
+  allMatches.slice().reverse().forEach(function(m,i){
+    if(i===0){streakPlayer=m.winner;curStreak=1;}
+    else if(m.winner===streakPlayer)curStreak++;
+  });
+
+  var total = winsA+winsS;
+  document.getElementById('wins-a').textContent = winsA;
+  document.getElementById('wins-s').textContent = winsS;
+  document.getElementById('name-a').textContent = data.players.a;
+  document.getElementById('name-s').textContent = data.players.s;
+  document.getElementById('av-a').textContent = data.players.a[0].toUpperCase();
+  document.getElementById('av-s').textContent = data.players.s[0].toUpperCase();
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-la').textContent = 'Win% '+data.players.a.split(' ')[0];
+  document.getElementById('stat-ls').textContent = 'Win% '+data.players.s.split(' ')[0];
+  document.getElementById('stat-pa').textContent = total>0?Math.round(winsA/total*100)+'%':'—';
+  document.getElementById('stat-ps').textContent = total>0?Math.round(winsS/total*100)+'%':'—';
+
+  document.getElementById('streak-a').textContent = streakPlayer==='a'&&curStreak>0?'racha: '+curStreak+(curStreak>1?' seguidas':' seguida'):'';
+  document.getElementById('streak-s').textContent = streakPlayer==='s'&&curStreak>0?'racha: '+curStreak+(curStreak>1?' seguidas':' seguida'):'';
+
+  var wrSec = document.getElementById('wr-section');
+  wrSec.style.display = hasBall ? 'block' : 'none';
+  if(hasBall){
+    document.getElementById('wr-na').textContent = data.players.a;
+    document.getElementById('wr-ns').textContent = data.players.s;
+    var rpa=rTA>0?Math.round(rWA/rTA*100):50, lpa=lTA>0?Math.round(lWA/lTA*100):50;
+    var rps=rTS>0?Math.round(rWS/rTS*100):50, lps=lTS>0?Math.round(lWS/lTS*100):50;
+    document.getElementById('wr-numa').textContent='Rayadas '+rpa+'% · Lisas '+lpa+'%';
+    document.getElementById('wr-nums').textContent='Rayadas '+rps+'% · Lisas '+lps+'%';
+    document.getElementById('wr-ar').style.width=rpa+'%';
+    document.getElementById('wr-al').style.width=lpa+'%';
+    document.getElementById('wr-sr').style.width=rps+'%';
+    document.getElementById('wr-sl').style.width=lps+'%';
+  }
+
+  // Prizes
+  var tournaments = yearData.tournaments || [];
+  var pSec = document.getElementById('prizes-section');
+  var pList = document.getElementById('prizes-list');
+  if(tournaments.length===0){ pSec.style.display='none'; }
+  else {
+    pSec.style.display='block'; pList.innerHTML='';
+    tournaments.forEach(function(t){
+      var d=document.createElement('div');
+      var cls='prize';
+      if(t.status==='active')cls+=' active';
+      if(t.status==='won-a'||t.status==='won-s')cls+=' won';
+      d.className=cls;
+      var sub=t.desc||'';
+      if(t.status==='won-a')sub='Ganado por '+data.players.a;
+      if(t.status==='won-s')sub='Ganado por '+data.players.s;
+      var badge=t.status==='active'?'<span class="prize-active-badge">En curso</span>':'';
+      d.innerHTML='<div class="prize-icon-wrap">'+(t.icon||'🏆')+'</div>'
+        +'<div class="prize-info"><div class="prize-name">'+t.name+'</div>'+(sub?'<div class="prize-sub">'+sub+'</div>':'')+'</div>'+badge;
+      pList.appendChild(d);
+    });
+  }
+
+  // History
+  var hist = document.getElementById('history-list');
+  hist.innerHTML='';
+  if(sessions.length===0){
+    hist.innerHTML='<div class="empty-state">Todavía no hay partidas cargadas</div>';
+  } else {
+    sessions.slice().reverse().forEach(function(s,si){
+      var hdr=document.createElement('div');
+      hdr.className='session-header';
+      hdr.textContent='Sesión '+(sessions.length-si)+' · '+s.date;
+      hist.appendChild(hdr);
+      s.matches.forEach(function(m){
+        var row=document.createElement('div');
+        row.className='match-row';
+        var wn=m.winner==='a'?data.players.a:data.players.s;
+        var pc=m.winner==='a'?'pill-a':'pill-s';
+        var detail='';
+        if(m.ballA&&m.ballS){
+          var ba=m.ballA==='r'?'Rayadas':'Lisas';
+          var bs=m.ballS==='r'?'Rayadas':'Lisas';
+          detail='<div class="match-detail">'+data.players.a+': '+ba+' · '+data.players.s+': '+bs+'</div>';
+        }
+        row.innerHTML='<div><div class="match-winner">'+wn+' ganó</div>'+detail+'</div><span class="pill '+pc+'">'+wn+'</span>';
+        hist.appendChild(row);
+      });
+    });
+  }
+
+  // Session tournament selector
+  var tourSel = document.getElementById('session-tournament');
+  tourSel.innerHTML='<option value="">Sin torneo específico</option>';
+  tournaments.forEach(function(t){
+    var o=document.createElement('option');
+    o.value=t.id; o.textContent=t.name;
+    if(t.status==='active')o.selected=true;
+    tourSel.appendChild(o);
+  });
+
+  renderYears(data);
+  renderTournaments(data, viewYear);
+}
+
+function renderYears(data){
+  var yl=document.getElementById('years-list');
+  yl.innerHTML='';
+  Object.keys(data.years).sort().forEach(function(y){
+    var d=document.createElement('div');
+    d.className='config-item';
+    d.innerHTML='<div class="config-item-info"><div class="config-item-name">'+y+'</div>'
+      +'<div class="config-item-sub">'+(data.years[y].sessions||[]).length+' sesiones</div></div>'
+      +'<button class="icon-btn" onclick="setViewYear(\''+y+'\')">Ver ›</button>';
+    yl.appendChild(d);
+  });
+}
+
+function renderTournaments(data, year){
+  var tl=document.getElementById('tournaments-list');
+  tl.innerHTML='';
+  var yData=data.years[year]||{tournaments:[]};
+  if(!(yData.tournaments||[]).length){
+    tl.innerHTML='<div class="empty-state" style="padding:16px 0 8px;">No hay torneos para este año</div>';
+    return;
+  }
+  (yData.tournaments||[]).forEach(function(t,i){
+    var sl=t.status==='active'?'sp-active':t.status==='pending'?'sp-pending':'sp-won';
+    var st=t.status==='active'?'En curso':t.status==='pending'?'Próximo':t.status==='won-a'?'Ganado por '+data.players.a:'Ganado por '+data.players.s;
+    var d=document.createElement('div');
+    d.className='config-item'; d.id='ti-'+i;
+    d.innerHTML='<div class="config-item-icon">'+(t.icon||'🏆')+'</div>'
+      +'<div class="config-item-info" id="td-'+i+'"><div class="config-item-name">'+t.name+'</div></div>'
+      +'<span class="status-pill '+sl+'" style="margin-right:4px;">'+st+'</span>'
+      +'<button class="icon-btn" title="Editar" onclick="editName('+i+')">✏️</button>'
+      +'<button class="icon-btn" title="Cambiar estado" onclick="cycleStatus('+i+')">↻</button>';
+    tl.appendChild(d);
+  });
+}
+
+function editName(idx){
+  var data=loadData();
+  var t=data.years[viewYear].tournaments[idx];
+  var div=document.getElementById('td-'+idx);
+  div.innerHTML='<div class="edit-inline"><input class="text-input" id="en-'+idx+'" value="'+t.name+'" />'
+    +'<button class="btn-ok" onclick="saveName('+idx+')">OK</button></div>';
+  document.getElementById('en-'+idx).focus();
+}
+
+function saveName(idx){
+  var val=(document.getElementById('en-'+idx).value||'').trim();
+  if(!val){showToast('Escribí un nombre');return;}
+  var data=loadData();
+  data.years[viewYear].tournaments[idx].name=val;
+  saveData(data); renderAll(data);
+  showToast('Nombre actualizado');
+}
+
+function cycleStatus(idx){
+  var data=loadData();
+  var sts=['pending','active','won-a','won-s'];
+  var t=data.years[viewYear].tournaments[idx];
+  t.status=sts[(sts.indexOf(t.status)+1)%sts.length];
+  saveData(data); renderAll(data);
+  showToast('Estado actualizado');
+}
+
+function setViewYear(y){
+  viewYear=y; var data=loadData(); renderAll(data); switchTabById('torneo');
+}
+
+function changeYear(dir){
+  var data=loadData();
+  var ys=Object.keys(data.years).sort();
+  var ni=ys.indexOf(viewYear)+dir;
+  if(ni>=0&&ni<ys.length){viewYear=ys[ni];renderAll(data);}
+}
+
+function addYear(){
+  var y=prompt('¿Qué año querés agregar?');
+  if(!y||isNaN(y))return; y=y.trim();
+  var data=loadData();
+  if(!data.years[y])data.years[y]={tournaments:[],sessions:[]};
+  saveData(data); viewYear=y; renderAll(data);
+  showToast('Año '+y+' agregado');
+}
+
+function showAddTournament(){
+  document.getElementById('add-tournament-form').style.display='block';
+}
+
+function saveNewTournament(){
+  var name=(document.getElementById('new-t-name').value||'').trim();
+  var icon=(document.getElementById('new-t-icon').value||'').trim()||'🏆';
+  var desc=(document.getElementById('new-t-desc').value||'').trim();
+  var status=document.getElementById('new-t-status').value;
+  if(!name){showToast('Poné un nombre');return;}
+  var data=loadData();
+  if(!data.years[viewYear])data.years[viewYear]={tournaments:[],sessions:[]};
+  data.years[viewYear].tournaments.push({id:'t'+Date.now(),name:name,icon:icon,desc:desc,status:status});
+  saveData(data);
+  ['new-t-name','new-t-icon','new-t-desc'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('add-tournament-form').style.display='none';
+  renderAll(data); showToast('Torneo guardado');
+}
+
+function savePlayers(){
+  var a=(document.getElementById('cfg-na').value||'').trim();
+  var s=(document.getElementById('cfg-ns').value||'').trim();
+  if(!a||!s){showToast('Completá los dos nombres');return;}
+  var data=loadData(); data.players.a=a; data.players.s=s;
+  saveData(data); renderAll(data); showToast('Nombres guardados');
+}
+
+function sel(group,player){
+  ['a','s'].forEach(function(p){ document.getElementById(group+'-'+p).classList.remove('sel-a','sel-s'); });
+  document.getElementById(group+'-'+player).classList.add('sel-'+player);
+  formSel[group]=player;
+}
+
+function selBall(game,player,type){
+  var pfx='b'+game+player+'-';
+  ['r','l'].forEach(function(t){ document.getElementById(pfx+t).classList.remove('sel-r','sel-l'); });
+  document.getElementById(pfx+type).classList.add('sel-'+type);
+  formSel['b'+game+player]=type;
+}
+
+function saveSession(){
+  if(!formSel['w1']||!formSel['w2']){showToast('Elegí el ganador de las dos partidas');return;}
+  if(trackBalls[1]&&(!formSel['b1a']||!formSel['b1s'])){showToast('Completá las bolas de la partida 1');return;}
+  if(trackBalls[2]&&(!formSel['b2a']||!formSel['b2s'])){showToast('Completá las bolas de la partida 2');return;}
+  var data=loadData();
+  if(!data.years[viewYear])data.years[viewYear]={tournaments:[],sessions:[]};
+  var today=new Date();
+  var ds=today.getDate()+'/'+(today.getMonth()+1)+'/'+today.getFullYear();
+  data.years[viewYear].sessions.push({
+    date:ds,
+    tournamentId:document.getElementById('session-tournament').value,
+    matches:[
+      {winner:formSel['w1'],ballA:trackBalls[1]?formSel['b1a']:null,ballS:trackBalls[1]?formSel['b1s']:null},
+      {winner:formSel['w2'],ballA:trackBalls[2]?formSel['b2a']:null,ballS:trackBalls[2]?formSel['b2s']:null}
+    ]
+  });
+  saveData(data);
+  formSel={}; trackBalls={1:true,2:true};
+  ['w1-a','w1-s','w2-a','w2-s','b1a-r','b1a-l','b1s-r','b1s-l','b2a-r','b2a-l','b2s-r','b2s-l'].forEach(function(id){
+    var el=document.getElementById(id); if(el)el.className='radio-opt';
+  });
+  ['track1','track2'].forEach(function(id){ var el=document.getElementById(id); if(el)el.checked=true; });
+  ['balls1-inputs','balls2-inputs'].forEach(function(id){ var el=document.getElementById(id); if(el)el.style.display='block'; });
+  renderAll(data); switchTabById('torneo'); showToast('Sesión guardada ✓');
+}
+
+function switchTab(name,btn){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+  document.getElementById('view-'+name).classList.add('active');
+}
+
+function switchTabById(name){
+  var names=['torneo','cargar','config'];
+  document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',names[i]===name);});
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
+  document.getElementById('view-'+name).classList.add('active');
+}
+
+init();
+</script>
+</body>
+</html>
