@@ -611,71 +611,9 @@ body::before {
 
   <!-- CARGAR -->
   <div id="view-cargar" class="view">
-    <div class="game-block">
-      <div class="game-title">Partida 1</div>
-      <div class="form-field">
-        <span class="form-label">¿Quién ganó?</span>
-        <div class="radio-group">
-          <div class="radio-opt" id="w1-a" onclick="sel('w1','a')">Augusto</div>
-          <div class="radio-opt" id="w1-s" onclick="sel('w1','s')">Sira</div>
-        </div>
-      </div>
-      <div>
-        <div class="toggle-row">
-          <span class="toggle-label">Registrar tipo de bola</span>
-          <label class="toggle"><input type="checkbox" id="track1" checked onchange="toggleBalls(1)"><span class="toggle-slider"></span></label>
-        </div>
-        <div id="balls1-inputs">
-          <div class="form-field">
-            <span class="form-label" id="bl1a-label">Bolas de Augusto</span>
-            <div class="radio-group">
-              <div class="radio-opt" id="b1a-r" onclick="selBall(1,'a','r')">Rayadas</div>
-              <div class="radio-opt" id="b1a-l" onclick="selBall(1,'a','l')">Lisas</div>
-            </div>
-          </div>
-          <div class="form-field">
-            <span class="form-label" id="bl1s-label">Bolas de Sira</span>
-            <div class="radio-group">
-              <div class="radio-opt" id="b1s-r" onclick="selBall(1,'s','r')">Rayadas</div>
-              <div class="radio-opt" id="b1s-l" onclick="selBall(1,'s','l')">Lisas</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div id="matches-container"></div>
 
-    <div class="game-block">
-      <div class="game-title">Partida 2</div>
-      <div class="form-field">
-        <span class="form-label">¿Quién ganó?</span>
-        <div class="radio-group">
-          <div class="radio-opt" id="w2-a" onclick="sel('w2','a')">Augusto</div>
-          <div class="radio-opt" id="w2-s" onclick="sel('w2','s')">Sira</div>
-        </div>
-      </div>
-      <div>
-        <div class="toggle-row">
-          <span class="toggle-label">Registrar tipo de bola</span>
-          <label class="toggle"><input type="checkbox" id="track2" checked onchange="toggleBalls(2)"><span class="toggle-slider"></span></label>
-        </div>
-        <div id="balls2-inputs">
-          <div class="form-field">
-            <span class="form-label" id="bl2a-label">Bolas de Augusto</span>
-            <div class="radio-group">
-              <div class="radio-opt" id="b2a-r" onclick="selBall(2,'a','r')">Rayadas</div>
-              <div class="radio-opt" id="b2a-l" onclick="selBall(2,'a','l')">Lisas</div>
-            </div>
-          </div>
-          <div class="form-field">
-            <span class="form-label" id="bl2s-label">Bolas de Sira</span>
-            <div class="radio-group">
-              <div class="radio-opt" id="b2s-r" onclick="selBall(2,'s','r')">Rayadas</div>
-              <div class="radio-opt" id="b2s-l" onclick="selBall(2,'s','l')">Lisas</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <button class="btn-secondary" onclick="addMatchBlock()" style="margin-bottom:12px;">+ Más partidas</button>
 
     <div class="card" style="margin-bottom:12px;">
       <div class="card-title">Torneo al que pertenece</div>
@@ -733,8 +671,8 @@ body::before {
 <div class="toast" id="toast"></div>
 
 <script>
-var formSel = {};
-var trackBalls = {1:true, 2:true};
+var matchCount = 0;
+var matchData = {};
 var viewYear;
 
 var defaultData = {
@@ -764,23 +702,106 @@ function showToast(msg) {
 function init() {
   var data = loadData();
   viewYear = data.currentYear || '2025';
+  addMatchBlock();
   renderAll(data);
 }
 
 function updatePlayerLabels(data) {
-  ['w1-a','w2-a'].forEach(function(id){ var el=document.getElementById(id); if(el) el.textContent=data.players.a; });
-  ['w1-s','w2-s'].forEach(function(id){ var el=document.getElementById(id); if(el) el.textContent=data.players.s; });
-  ['bl1a-label','bl2a-label'].forEach(function(id){ var el=document.getElementById(id); if(el) el.textContent='Bolas de '+data.players.a; });
-  ['bl1s-label','bl2s-label'].forEach(function(id){ var el=document.getElementById(id); if(el) el.textContent='Bolas de '+data.players.s; });
   var nt = document.getElementById('new-t-status');
   if(nt){ nt.options[2].text='Ganado por '+data.players.a; nt.options[3].text='Ganado por '+data.players.s; }
+  // refresh existing match blocks labels
+  for(var n=1;n<=matchCount;n++){
+    var la=document.getElementById('lbl-'+n+'-a'); if(la) la.textContent='Bolas de '+data.players.a;
+    var ls=document.getElementById('lbl-'+n+'-s'); if(ls) ls.textContent='Bolas de '+data.players.s;
+    var wa=document.getElementById('w-'+n+'-a'); if(wa) wa.textContent=data.players.a;
+    var ws=document.getElementById('w-'+n+'-s'); if(ws) ws.textContent=data.players.s;
+  }
 }
 
-function toggleBalls(game) {
-  var checked = document.getElementById('track'+game).checked;
-  trackBalls[game] = checked;
-  document.getElementById('balls'+game+'-inputs').style.display = checked ? 'block' : 'none';
-  if(!checked){ formSel['b'+game+'a']=null; formSel['b'+game+'s']=null; }
+function addMatchBlock() {
+  matchCount++;
+  var n = matchCount;
+  matchData[n] = {winner:null, ballA:null, ballS:null, track:true};
+  var data = loadData();
+  var na = data.players.a, ns = data.players.s;
+  var div = document.createElement('div');
+  div.className = 'game-block';
+  div.id = 'match-block-'+n;
+  div.innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">'
+    +'<div class="game-title" style="margin-bottom:0;">Partida '+n+'</div>'
+    +(n>1?'<button class="icon-btn" onclick="removeMatchBlock('+n+')" title="Eliminar" style="font-size:16px;color:var(--text3);">✕</button>':'')
+    +'</div>'
+    +'<div class="form-field"><span class="form-label">¿Quién ganó?</span>'
+    +'<div class="radio-group">'
+    +'<div class="radio-opt" id="w-'+n+'-a" onclick="selW('+n+',\'a\')">'+na+'</div>'
+    +'<div class="radio-opt" id="w-'+n+'-s" onclick="selW('+n+',\'s\')">'+ns+'</div>'
+    +'</div></div>'
+    +'<div class="toggle-row"><span class="toggle-label">Registrar tipo de bola</span>'
+    +'<label class="toggle"><input type="checkbox" id="track-'+n+'" checked onchange="toggleBallsN('+n+')"><span class="toggle-slider"></span></label>'
+    +'</div>'
+    +'<div id="balls-'+n+'">'
+    +'<div class="form-field"><span class="form-label" id="lbl-'+n+'-a">Bolas de '+na+'</span>'
+    +'<div class="radio-group">'
+    +'<div class="radio-opt" id="b-'+n+'-a-r" onclick="selB('+n+',\'a\',\'r\')">Rayadas</div>'
+    +'<div class="radio-opt" id="b-'+n+'-a-l" onclick="selB('+n+',\'a\',\'l\')">Lisas</div>'
+    +'</div></div>'
+    +'<div class="form-field"><span class="form-label" id="lbl-'+n+'-s">Bolas de '+ns+'</span>'
+    +'<div class="radio-group">'
+    +'<div class="radio-opt" id="b-'+n+'-s-r" onclick="selB('+n+',\'s\',\'r\')">Rayadas</div>'
+    +'<div class="radio-opt" id="b-'+n+'-s-l" onclick="selB('+n+',\'s\',\'l\')">Lisas</div>'
+    +'</div></div>'
+    +'</div>';
+  document.getElementById('matches-container').appendChild(div);
+}
+
+function removeMatchBlock(n) {
+  var el = document.getElementById('match-block-'+n);
+  if(el) el.remove();
+  delete matchData[n];
+}
+
+function toggleBallsN(n) {
+  var checked = document.getElementById('track-'+n).checked;
+  matchData[n].track = checked;
+  document.getElementById('balls-'+n).style.display = checked ? 'block' : 'none';
+  if(!checked){ matchData[n].ballA=null; matchData[n].ballS=null; }
+}
+
+function selW(n, player) {
+  ['a','s'].forEach(function(p){ var el=document.getElementById('w-'+n+'-'+p); if(el) el.classList.remove('sel-a','sel-s'); });
+  document.getElementById('w-'+n+'-'+player).classList.add('sel-'+player);
+  matchData[n].winner = player;
+}
+
+function selB(n, player, type) {
+  ['r','l'].forEach(function(t){ var el=document.getElementById('b-'+n+'-'+player+'-'+t); if(el) el.classList.remove('sel-r','sel-l'); });
+  document.getElementById('b-'+n+'-'+player+'-'+type).classList.add('sel-'+type);
+  if(player==='a') matchData[n].ballA=type;
+  else matchData[n].ballS=type;
+}
+
+function saveSession(){
+  var activeNums = Object.keys(matchData).filter(function(n){ return document.getElementById('match-block-'+n); });
+  if(activeNums.length===0){showToast('Agregá al menos una partida');return;}
+  for(var i=0;i<activeNums.length;i++){
+    var n=activeNums[i], m=matchData[n];
+    if(!m.winner){showToast('Elegí el ganador de la partida '+n);return;}
+    if(m.track&&(!m.ballA||!m.ballS)){showToast('Completá las bolas de la partida '+n);return;}
+  }
+  var data=loadData();
+  if(!data.years[viewYear])data.years[viewYear]={tournaments:[],sessions:[]};
+  var today=new Date();
+  var ds=today.getDate()+'/'+(today.getMonth()+1)+'/'+today.getFullYear();
+  var matches=activeNums.map(function(n){ var m=matchData[n]; return {winner:m.winner,ballA:m.track?m.ballA:null,ballS:m.track?m.ballS:null}; });
+  data.years[viewYear].sessions.push({date:ds, tournamentId:document.getElementById('session-tournament').value, matches:matches});
+  saveData(data);
+  // reset
+  matchData={};
+  matchCount=0;
+  document.getElementById('matches-container').innerHTML='';
+  addMatchBlock();
+  renderAll(data); switchTabById('torneo'); showToast('Sesión guardada ✓');
 }
 
 function renderAll(data) {
@@ -1024,44 +1045,6 @@ function savePlayers(){
   saveData(data); renderAll(data); showToast('Nombres guardados');
 }
 
-function sel(group,player){
-  ['a','s'].forEach(function(p){ document.getElementById(group+'-'+p).classList.remove('sel-a','sel-s'); });
-  document.getElementById(group+'-'+player).classList.add('sel-'+player);
-  formSel[group]=player;
-}
-
-function selBall(game,player,type){
-  var pfx='b'+game+player+'-';
-  ['r','l'].forEach(function(t){ document.getElementById(pfx+t).classList.remove('sel-r','sel-l'); });
-  document.getElementById(pfx+type).classList.add('sel-'+type);
-  formSel['b'+game+player]=type;
-}
-
-function saveSession(){
-  if(!formSel['w1']||!formSel['w2']){showToast('Elegí el ganador de las dos partidas');return;}
-  if(trackBalls[1]&&(!formSel['b1a']||!formSel['b1s'])){showToast('Completá las bolas de la partida 1');return;}
-  if(trackBalls[2]&&(!formSel['b2a']||!formSel['b2s'])){showToast('Completá las bolas de la partida 2');return;}
-  var data=loadData();
-  if(!data.years[viewYear])data.years[viewYear]={tournaments:[],sessions:[]};
-  var today=new Date();
-  var ds=today.getDate()+'/'+(today.getMonth()+1)+'/'+today.getFullYear();
-  data.years[viewYear].sessions.push({
-    date:ds,
-    tournamentId:document.getElementById('session-tournament').value,
-    matches:[
-      {winner:formSel['w1'],ballA:trackBalls[1]?formSel['b1a']:null,ballS:trackBalls[1]?formSel['b1s']:null},
-      {winner:formSel['w2'],ballA:trackBalls[2]?formSel['b2a']:null,ballS:trackBalls[2]?formSel['b2s']:null}
-    ]
-  });
-  saveData(data);
-  formSel={}; trackBalls={1:true,2:true};
-  ['w1-a','w1-s','w2-a','w2-s','b1a-r','b1a-l','b1s-r','b1s-l','b2a-r','b2a-l','b2s-r','b2s-l'].forEach(function(id){
-    var el=document.getElementById(id); if(el)el.className='radio-opt';
-  });
-  ['track1','track2'].forEach(function(id){ var el=document.getElementById(id); if(el)el.checked=true; });
-  ['balls1-inputs','balls2-inputs'].forEach(function(id){ var el=document.getElementById(id); if(el)el.style.display='block'; });
-  renderAll(data); switchTabById('torneo'); showToast('Sesión guardada ✓');
-}
 
 function switchTab(name,btn){
   document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
