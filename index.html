@@ -152,6 +152,8 @@ body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index
 .btn-del-sm:hover { background:rgba(240,90,90,0.1); }
 .session-matches { padding:0 14px 10px; display:flex; flex-direction:column; gap:4px; }
 .session-match-row { display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:var(--surface); border-radius:var(--radius-sm); border:1px solid var(--border); font-size:13px; }
+.match-edit-form { background:var(--surface); border:1px solid rgba(200,240,74,0.2); border-radius:var(--radius-sm); padding:12px; margin-bottom:4px; }
+#fireworks-canvas { position:fixed; inset:0; pointer-events:none; z-index:500; }
 
 .reglamento-item { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:12px; }
 .reglamento-titulo { font-size:15px; font-weight:700; color:var(--text); margin-bottom:8px; }
@@ -314,6 +316,7 @@ textarea.text-input { resize:vertical; min-height:100px; }
 </div>
 
 <div class="toast" id="toast"></div>
+<canvas id="fireworks-canvas"></canvas>
 
 <script>
 var SB_URL = 'https://brxxpumholxkpldzoqwh.supabase.co';
@@ -568,7 +571,7 @@ async function saveSession(){
     state.sessions=await sbGet('sessions','order=created_at.asc');
     matchData={}; matchCount=0; document.getElementById('matches-container').innerHTML='';
     viewTournamentId=tid;
-    addMatchBlock(); renderAll(); switchTabById('torneo'); showToast('Sesión guardada ✓');
+    addMatchBlock(); renderAll(); switchTabById('torneo'); showToast('Sesión guardada ✓'); launchFireworks();
   } catch(e){ showToast('Error al guardar. Revisá la conexión.',true); console.error(e); }
   btn.disabled=false; btn.textContent='Guardar sesión';
 }
@@ -605,7 +608,8 @@ function renderTournaments(){
       +'<div class="config-item-info" id="td-'+t.id+'"><div class="config-item-name">'+t.name+'</div></div>'
       +'<span class="status-pill '+sl+'" style="margin-right:4px;">'+st+'</span>'
       +'<button class="icon-btn" onclick="editTName(\''+t.id+'\')">✏️</button>'
-      +'<button class="icon-btn" onclick="cycleStatus(\''+t.id+'\')">↻</button>';
+      +'<button class="icon-btn" onclick="cycleStatus(\''+t.id+'\')">↻</button>'
+      +'<button class="icon-btn" style="color:#f05a5a;" onclick="deleteTournament(\''+t.id+'\')">🗑</button>';
     tl.appendChild(d);
   });
 }
@@ -639,13 +643,17 @@ function renderSessionsList(){
         +'<div class="session-block-actions">'
         +'<button class="btn-del-sm" onclick="deleteSession(\''+s.id+'\')" title="Eliminar sesión">🗑</button>'
         +'</div></div>'
-        +'<div class="session-matches">'
-        +(s.matches||[]).map(function(m){
+        +'<div class="session-matches" id="sm-'+s.id+'">'
+        +(s.matches||[]).map(function(m, mi){
           var wn=m.winner==='a'?na:ns;
           var pc=m.winner==='a'?'pill-a':'pill-s';
           var detail='';
-          if(m.ballA&&m.ballS){ detail=' <span style="font-family:var(--mono);font-size:10px;color:var(--text3);">'+( m.ballA==='r'?'Ray':'Lis')+'/'+( m.ballS==='r'?'Ray':'Lis')+'</span>'; }
-          return '<div class="session-match-row"><span style="font-weight:600;">'+wn+' ganó</span>'+detail+'<span class="pill '+pc+'">'+wn+'</span></div>';
+          if(m.ballA&&m.ballS){ detail=' <span style="font-family:var(--mono);font-size:10px;color:var(--text3);">'+(m.ballA==='r'?'Ray':'Lis')+'/'+(m.ballS==='r'?'Ray':'Lis')+'</span>'; }
+          return '<div class="session-match-row" id="smr-'+s.id+'-'+mi+'">'
+            +'<div style="display:flex;align-items:center;gap:8px;flex:1;"><span style="font-weight:600;">'+wn+' ganó</span>'+detail+'</div>'
+            +'<span class="pill '+pc+'" style="margin-right:6px;">'+wn+'</span>'
+            +'<button class="icon-btn" style="font-size:12px;" onclick="editMatchInSession(\''+s.id+'\','+mi+')">✏️</button>'
+            +'</div>';
         }).join('')
         +'</div>';
       sl.appendChild(block);
@@ -823,6 +831,141 @@ function switchTabById(name){
   document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',names[i]===name);});
   document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
   document.getElementById('view-'+name).classList.add('active');
+}
+
+// ── DELETE TOURNAMENT ────────────────────────────────────────────
+async function deleteTournament(id){
+  var t=state.tournaments.find(function(x){return x.id===id;}); if(!t)return;
+  var hasSessions=state.sessions.some(function(s){return s.tournament_id===id;});
+  var msg='¿Seguro que querés eliminar el torneo "'+t.name+'"?'+(hasSessions?' También se eliminarán todas sus sesiones.':'');
+  if(!confirm(msg))return;
+  try{
+    if(hasSessions) await sbDelete('sessions','tournament_id=eq.'+id);
+    await sbDelete('tournaments','id=eq.'+id);
+    state.tournaments=state.tournaments.filter(function(x){return x.id!==id;});
+    state.sessions=state.sessions.filter(function(s){return s.tournament_id!==id;});
+    if(viewTournamentId===id){
+      var yT=state.tournaments.filter(function(t){return t.year===viewYear;});
+      viewTournamentId=yT.length?yT[0].id:null;
+    }
+    renderAll(); showToast('Torneo eliminado');
+  }catch(e){ showToast('Error al eliminar torneo',true); console.error(e); }
+}
+
+// ── EDIT MATCH IN SESSION ─────────────────────────────────────────
+function editMatchInSession(sessionId, matchIdx){
+  var s=state.sessions.find(function(x){return x.id===sessionId;}); if(!s)return;
+  var m=s.matches[matchIdx]; if(!m)return;
+  var na=state.players.a||'A', ns=state.players.s||'S';
+  var container=document.getElementById('smr-'+sessionId+'-'+matchIdx);
+  if(!container)return;
+
+  var mkOpt=function(id,lbl,selCls,isSel){
+    return '<div class="radio-opt'+(isSel?' '+selCls:'')+'" id="em-'+id+'" onclick="emSel(\''+sessionId+'\','+matchIdx+',\''+id+'\')">'+lbl+'</div>';
+  };
+
+  container.outerHTML='<div class="match-edit-form" id="smr-'+sessionId+'-'+matchIdx+'">'
+    +'<div style="font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;">Editando partida '+(matchIdx+1)+'</div>'
+    +'<div class="form-label" style="margin-bottom:6px;">¿Quién ganó?</div>'
+    +'<div class="radio-group" style="margin-bottom:12px;">'
+    +mkOpt('w-'+sessionId+'-'+matchIdx+'-a',na,'sel-a',m.winner==='a')
+    +mkOpt('w-'+sessionId+'-'+matchIdx+'-s',ns,'sel-s',m.winner==='s')
+    +'</div>'
+    +'<div class="form-label" style="margin-bottom:6px;">Bolas de '+na+'</div>'
+    +'<div class="radio-group" style="margin-bottom:12px;">'
+    +mkOpt('ba-'+sessionId+'-'+matchIdx+'-r','Rayadas','sel-r',m.ballA==='r')
+    +mkOpt('ba-'+sessionId+'-'+matchIdx+'-l','Lisas','sel-l',m.ballA==='l')
+    +mkOpt('ba-'+sessionId+'-'+matchIdx+'-n','Sin dato','sel-skip',!m.ballA)
+    +'</div>'
+    +'<div class="form-label" style="margin-bottom:6px;">Bolas de '+ns+'</div>'
+    +'<div class="radio-group" style="margin-bottom:12px;">'
+    +mkOpt('bs-'+sessionId+'-'+matchIdx+'-r','Rayadas','sel-r',m.ballS==='r')
+    +mkOpt('bs-'+sessionId+'-'+matchIdx+'-l','Lisas','sel-l',m.ballS==='l')
+    +mkOpt('bs-'+sessionId+'-'+matchIdx+'-n','Sin dato','sel-skip',!m.ballS)
+    +'</div>'
+    +'<div style="display:flex;gap:8px;">'
+    +'<button class="btn-primary" style="margin-bottom:0;" onclick="saveMatchEdit(\''+sessionId+'\','+matchIdx+')">Guardar</button>'
+    +'<button class="btn-secondary" style="margin-bottom:0;" onclick="renderSessionsList()">Cancelar</button>'
+    +'</div></div>';
+}
+
+var emState={};
+function emSel(sessionId, matchIdx, optId){
+  var prefix=optId.split('-')[0];
+  var allInGroup=document.querySelectorAll('[id^="em-'+prefix+'-'+sessionId+'-'+matchIdx+'"]');
+  allInGroup.forEach(function(el){ el.classList.remove('sel-a','sel-s','sel-r','sel-l','sel-skip'); });
+  var el=document.getElementById('em-'+optId);
+  if(!el)return;
+  var cls=optId.endsWith('-a')?'sel-a':optId.endsWith('-s')?'sel-s':optId.endsWith('-r')?'sel-r':optId.endsWith('-l')?'sel-l':'sel-skip';
+  el.classList.add(cls);
+  if(!emState[sessionId]) emState[sessionId]={};
+  if(!emState[sessionId][matchIdx]) emState[sessionId][matchIdx]={};
+  emState[sessionId][matchIdx][prefix]=optId.split('-').pop();
+}
+
+async function saveMatchEdit(sessionId, matchIdx){
+  var s=state.sessions.find(function(x){return x.id===sessionId;}); if(!s)return;
+  var em=(emState[sessionId]&&emState[sessionId][matchIdx])||{};
+
+  var wEl=document.querySelector('[id^="em-w-'+sessionId+'-'+matchIdx+'"].sel-a,[id^="em-w-'+sessionId+'-'+matchIdx+'"].sel-s');
+  var baEl=document.querySelector('[id^="em-ba-'+sessionId+'-'+matchIdx+'"].sel-r,[id^="em-ba-'+sessionId+'-'+matchIdx+'"].sel-l,[id^="em-ba-'+sessionId+'-'+matchIdx+'"].sel-skip');
+  var bsEl=document.querySelector('[id^="em-bs-'+sessionId+'-'+matchIdx+'"].sel-r,[id^="em-bs-'+sessionId+'-'+matchIdx+'"].sel-l,[id^="em-bs-'+sessionId+'-'+matchIdx+'"].sel-skip');
+
+  var winner=wEl?wEl.id.split('-').pop():s.matches[matchIdx].winner;
+  var ballA=baEl?(baEl.classList.contains('sel-skip')?null:baEl.id.split('-').pop()):s.matches[matchIdx].ballA;
+  var ballS=bsEl?(bsEl.classList.contains('sel-skip')?null:bsEl.id.split('-').pop()):s.matches[matchIdx].ballS;
+
+  var newMatches=s.matches.map(function(m,i){ return i===matchIdx?{winner:winner,ballA:ballA,ballS:ballS}:m; });
+  try{
+    await sbUpdate('sessions','id=eq.'+sessionId,{matches:newMatches});
+    s.matches=newMatches;
+    delete emState[sessionId];
+    renderAll(); showToast('Partida actualizada');
+  }catch(e){ showToast('Error al actualizar',true); console.error(e); }
+}
+
+// ── FIREWORKS ────────────────────────────────────────────────────
+function launchFireworks(){
+  var canvas=document.getElementById('fireworks-canvas');
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  var ctx=canvas.getContext('2d');
+  var particles=[];
+  var colors=['#c8f04a','#7b6ef6','#f0875a','#4ade80','#ffffff','#fbbf24'];
+
+  for(var b=0;b<6;b++){
+    (function(delay){
+      setTimeout(function(){
+        var x=window.innerWidth*(0.2+Math.random()*0.6);
+        var y=window.innerHeight*(0.2+Math.random()*0.5);
+        var color=colors[Math.floor(Math.random()*colors.length)];
+        for(var i=0;i<40;i++){
+          var angle=Math.random()*Math.PI*2;
+          var speed=2+Math.random()*4;
+          particles.push({x:x,y:y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,alpha:1,color:color,size:2+Math.random()*2});
+        }
+      },delay);
+    })(b*220);
+  }
+
+  var start=null;
+  function animate(ts){
+    if(!start)start=ts;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(function(p){
+      p.x+=p.vx; p.y+=p.vy; p.vy+=0.07; p.alpha-=0.018;
+      if(p.alpha<=0)return;
+      ctx.globalAlpha=p.alpha;
+      ctx.fillStyle=p.color;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+      ctx.fill();
+    });
+    ctx.globalAlpha=1;
+    particles=particles.filter(function(p){return p.alpha>0;});
+    if(ts-start<2800) requestAnimationFrame(animate);
+    else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  requestAnimationFrame(animate);
 }
 
 loadAll();
