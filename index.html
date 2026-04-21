@@ -30,9 +30,10 @@ body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index
 .header-sub { font-family:var(--mono); font-size:12px; color:var(--text3); margin-top:8px; letter-spacing:0.05em; }
 .header-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent); margin-right:6px; animation:pulse 2s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.4;transform:scale(0.7);} }
+@keyframes splashPop { 0%{opacity:0;transform:scale(0.85);} 100%{opacity:1;transform:scale(1);} }
 
 .tabs { display:flex; gap:2px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:3px; margin-bottom:24px; }
-.tab { flex:1; padding:9px 8px; text-align:center; font-size:13px; font-weight:600; font-family:var(--font); cursor:pointer; color:var(--text2); background:transparent; border:none; border-radius:9px; transition:all 0.18s; }
+.tab { flex:1; padding:9px 4px; text-align:center; font-size:11px; font-weight:600; font-family:var(--font); cursor:pointer; color:var(--text2); background:transparent; border:none; border-radius:9px; transition:all 0.18s; }
 .tab:hover { color:var(--text); }
 .tab.active { background:var(--surface2); color:var(--text); box-shadow:0 1px 3px rgba(0,0,0,0.4); }
 .view { display:none; } .view.active { display:block; }
@@ -56,17 +57,18 @@ body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index
 .year-nav-btn:hover { color:var(--accent); }
 .year-nav-label { font-size:15px; font-weight:700; letter-spacing:0.05em; }
 
-.prizes { display:flex; flex-direction:column; gap:8px; }
-.prize { display:flex; align-items:center; gap:14px; padding:12px 14px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface2); }
-.prize.active { border-color:rgba(200,240,74,0.3); background:rgba(200,240,74,0.05); }
-.prize.won { opacity:0.45; }
-.prize-icon-wrap { width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; background:var(--surface); border:1px solid var(--border); flex-shrink:0; }
-.prize.active .prize-icon-wrap { background:rgba(200,240,74,0.1); border-color:rgba(200,240,74,0.25); }
-.prize-info { flex:1; }
-.prize-name { font-size:14px; font-weight:600; color:var(--text); }
-.prize.won .prize-name { text-decoration:line-through; }
-.prize-sub { font-family:var(--mono); font-size:11px; color:var(--text3); margin-top:2px; }
-.prize-active-badge { font-family:var(--mono); font-size:10px; font-weight:500; color:var(--accent); background:rgba(200,240,74,0.1); border:1px solid rgba(200,240,74,0.2); padding:2px 8px; border-radius:99px; white-space:nowrap; }
+.tournament-tabs { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+.tournament-tab { display:flex; align-items:center; gap:12px; padding:12px 16px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; transition:all 0.15s; }
+.tournament-tab:hover { border-color:var(--border2); }
+.tournament-tab.active { border-color:rgba(200,240,74,0.4); background:rgba(200,240,74,0.04); }
+.tt-icon { font-size:20px; flex-shrink:0; }
+.tt-info { flex:1; }
+.tt-name { font-size:14px; font-weight:600; color:var(--text); }
+.tt-sub { font-family:var(--mono); font-size:11px; color:var(--text3); margin-top:2px; }
+.tt-badge { font-family:var(--mono); font-size:10px; padding:2px 8px; border-radius:99px; flex-shrink:0; }
+.tt-active { background:rgba(200,240,74,0.1); color:var(--accent); border:1px solid rgba(200,240,74,0.25); }
+.tt-pending { background:var(--surface2); color:var(--text3); border:1px solid var(--border); }
+.tt-won { background:var(--a-light); color:var(--a-color); border:1px solid rgba(123,110,246,0.2); }
 
 .stats-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:16px; }
 .stat-item { background:var(--surface2); border-radius:var(--radius-sm); padding:14px 10px; text-align:center; border:1px solid var(--border); }
@@ -142,14 +144,15 @@ body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index
 .edit-inline input { flex:1; margin-bottom:0; }
 .btn-ok { padding:8px 12px; border:none; background:var(--accent); color:#0d0d0f; border-radius:var(--radius-sm); font-size:12px; font-weight:700; font-family:var(--font); cursor:pointer; white-space:nowrap; }
 
-.loading-overlay { position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:100; flex-direction:column; gap:12px; }
-.loading-spinner { width:32px; height:32px; border:2px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; }
-@keyframes spin { to { transform:rotate(360deg); } }
-.loading-text { font-family:var(--mono); font-size:12px; color:var(--text3); letter-spacing:0.08em; }
+.session-block { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:8px; overflow:hidden; }
+.session-block-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; }
+.session-block-date { font-family:var(--mono); font-size:11px; color:var(--text3); }
+.session-block-actions { display:flex; gap:4px; }
+.btn-del-sm { background:none; border:none; cursor:pointer; font-size:13px; padding:4px 6px; border-radius:6px; color:#f05a5a; transition:background 0.15s; }
+.btn-del-sm:hover { background:rgba(240,90,90,0.1); }
+.session-matches { padding:0 14px 10px; display:flex; flex-direction:column; gap:4px; }
+.session-match-row { display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:var(--surface); border-radius:var(--radius-sm); border:1px solid var(--border); font-size:13px; }
 
-.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(10px); background:var(--accent); color:#0d0d0f; padding:10px 20px; border-radius:99px; font-size:13px; font-weight:700; opacity:0; transition:all 0.25s; pointer-events:none; z-index:999; white-space:nowrap; }
-.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-.toast.error { background:#f05a5a; color:#fff; }
 .reglamento-item { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:12px; }
 .reglamento-titulo { font-size:15px; font-weight:700; color:var(--text); margin-bottom:8px; }
 .reglamento-contenido { font-size:13px; color:var(--text2); line-height:1.7; white-space:pre-wrap; }
@@ -162,7 +165,14 @@ body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index
 .reg-form { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:12px; }
 .reg-form-title { font-family:var(--mono); font-size:10px; color:var(--accent); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:14px; }
 textarea.text-input { resize:vertical; min-height:100px; }
-@keyframes splashPop { 0%{opacity:0;transform:scale(0.85);} 100%{opacity:1;transform:scale(1);} }
+
+.loading-overlay { position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:100; flex-direction:column; gap:12px; }
+.loading-spinner { width:32px; height:32px; border:2px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.loading-text { font-family:var(--mono); font-size:12px; color:var(--text3); letter-spacing:0.08em; }
+.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(10px); background:var(--accent); color:#0d0d0f; padding:10px 20px; border-radius:99px; font-size:13px; font-weight:700; opacity:0; transition:all 0.25s; pointer-events:none; z-index:999; white-space:nowrap; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.error { background:#f05a5a; color:#fff; }
 </style>
 </head>
 <body>
@@ -197,62 +207,61 @@ textarea.text-input { resize:vertical; min-height:100px; }
       <span class="year-nav-label" id="year-label">2025</span>
       <button class="year-nav-btn" onclick="changeYear(1)">&#8594;</button>
     </div>
-    <div class="scoreboard">
-      <div class="player">
-        <div class="player-avatar av-a" id="av-a">A</div>
-        <div class="player-name" id="name-a">—</div>
-        <div class="player-wins wins-a" id="wins-a">0</div>
-        <div class="player-streak" id="streak-a"></div>
-      </div>
-      <div class="vs-sep">VS</div>
-      <div class="player">
-        <div class="player-avatar av-s" id="av-s">S</div>
-        <div class="player-name" id="name-s">—</div>
-        <div class="player-wins wins-s" id="wins-s">0</div>
-        <div class="player-streak" id="streak-s"></div>
-      </div>
-    </div>
-    <div class="card" id="prizes-section" style="display:none;">
-      <div class="card-title">Torneos del año</div>
-      <div class="prizes" id="prizes-list"></div>
-    </div>
-    <div class="card">
-      <div class="card-title">Estadísticas</div>
-      <div class="stats-grid">
-        <div class="stat-item"><div class="stat-label">Partidas</div><div class="stat-value" id="stat-total">0</div></div>
-        <div class="stat-item"><div class="stat-label" id="stat-la">Win%</div><div class="stat-value" id="stat-pa">—</div></div>
-        <div class="stat-item"><div class="stat-label" id="stat-ls">Win%</div><div class="stat-value" id="stat-ps">—</div></div>
-      </div>
-      <div class="winrate-section" id="wr-section" style="display:none;">
-        <div class="winrate-title">Winrate por tipo de bola</div>
-        <div class="winrate-row">
-          <div class="winrate-header"><span class="winrate-name" id="wr-na">—</span><span class="winrate-nums" id="wr-numa"></span></div>
-          <div class="winrate-track"><div class="wr-seg wr-r" id="wr-ar" style="width:50%"></div><div class="wr-seg wr-l" id="wr-al" style="width:50%"></div></div>
+    <div id="tournament-tabs-list"></div>
+    <div id="torneo-detail" style="display:none;">
+      <div class="scoreboard">
+        <div class="player">
+          <div class="player-avatar av-a" id="av-a">A</div>
+          <div class="player-name" id="name-a">—</div>
+          <div class="player-wins wins-a" id="wins-a">0</div>
+          <div class="player-streak" id="streak-a"></div>
         </div>
-        <div class="winrate-row" style="margin-top:10px;">
-          <div class="winrate-header"><span class="winrate-name" id="wr-ns">—</span><span class="winrate-nums" id="wr-nums"></span></div>
-          <div class="winrate-track"><div class="wr-seg wr-r" id="wr-sr" style="width:50%"></div><div class="wr-seg wr-l" id="wr-sl" style="width:50%"></div></div>
-        </div>
-        <div class="legend">
-          <div class="legend-item"><div class="legend-dot" style="background:#d4922e"></div>Rayadas</div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--a-color)"></div>Lisas</div>
+        <div class="vs-sep">VS</div>
+        <div class="player">
+          <div class="player-avatar av-s" id="av-s">S</div>
+          <div class="player-name" id="name-s">—</div>
+          <div class="player-wins wins-s" id="wins-s">0</div>
+          <div class="player-streak" id="streak-s"></div>
         </div>
       </div>
-    </div>
-    <div class="card">
-      <div class="card-title">Historial</div>
-      <div class="history" id="history-list"></div>
+      <div class="card">
+        <div class="card-title">Estadísticas del torneo</div>
+        <div class="stats-grid">
+          <div class="stat-item"><div class="stat-label">Partidas</div><div class="stat-value" id="stat-total">0</div></div>
+          <div class="stat-item"><div class="stat-label" id="stat-la">Win%</div><div class="stat-value" id="stat-pa">—</div></div>
+          <div class="stat-item"><div class="stat-label" id="stat-ls">Win%</div><div class="stat-value" id="stat-ps">—</div></div>
+        </div>
+        <div class="winrate-section" id="wr-section" style="display:none;">
+          <div class="winrate-title">Winrate por tipo de bola</div>
+          <div class="winrate-row">
+            <div class="winrate-header"><span class="winrate-name" id="wr-na">—</span><span class="winrate-nums" id="wr-numa"></span></div>
+            <div class="winrate-track"><div class="wr-seg wr-r" id="wr-ar" style="width:50%"></div><div class="wr-seg wr-l" id="wr-al" style="width:50%"></div></div>
+          </div>
+          <div class="winrate-row" style="margin-top:10px;">
+            <div class="winrate-header"><span class="winrate-name" id="wr-ns">—</span><span class="winrate-nums" id="wr-nums"></span></div>
+            <div class="winrate-track"><div class="wr-seg wr-r" id="wr-sr" style="width:50%"></div><div class="wr-seg wr-l" id="wr-sl" style="width:50%"></div></div>
+          </div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#d4922e"></div>Rayadas</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--a-color)"></div>Lisas</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Historial</div>
+        <div class="history" id="history-list"></div>
+      </div>
     </div>
   </div>
 
   <!-- CARGAR -->
   <div id="view-cargar" class="view">
-    <div id="matches-container"></div>
-    <button class="btn-secondary" onclick="addMatchBlock()" style="margin-bottom:12px;">+ Más partidas</button>
     <div class="card" style="margin-bottom:12px;">
-      <div class="card-title">Torneo al que pertenece</div>
+      <div class="card-title">Torneo</div>
       <select class="select-field" id="session-tournament"></select>
     </div>
+    <div id="matches-container"></div>
+    <button class="btn-secondary" onclick="addMatchBlock()" style="margin-bottom:12px;">+ Más partidas</button>
     <button class="btn-primary" id="save-btn" onclick="saveSession()">Guardar sesión</button>
   </div>
 
@@ -265,7 +274,7 @@ textarea.text-input { resize:vertical; min-height:100px; }
       <button class="btn-primary" onclick="savePlayers()">Guardar nombres</button>
     </div>
     <div class="card">
-      <div class="card-title">Años del torneo</div>
+      <div class="card-title">Años</div>
       <div id="years-list"></div>
       <button class="btn-secondary" onclick="addYear()">+ Agregar año</button>
     </div>
@@ -290,15 +299,21 @@ textarea.text-input { resize:vertical; min-height:100px; }
         </div>
       </div>
     </div>
+    <div class="card">
+      <div class="card-title">Sesiones — <span id="cfg-sessions-tournament-name">seleccioná un torneo arriba</span></div>
+      <div id="sessions-list"></div>
+    </div>
   </div>
+
   <!-- REGLAMENTO -->
   <div id="view-reglamento" class="view">
     <div id="reglamento-list"></div>
     <div id="reglamento-form-container"></div>
     <button class="btn-secondary" onclick="showAddArticulo()" id="btn-add-articulo">+ Agregar artículo</button>
   </div>
-
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 var SB_URL = 'https://brxxpumholxkpldzoqwh.supabase.co';
@@ -318,9 +333,14 @@ async function sbUpdate(table, match, body) {
   var r = await fetch(SB_URL+'/rest/v1/'+table+'?'+match, { method:'PATCH', headers: Object.assign({}, HDR, {'Prefer':'return=minimal'}), body: JSON.stringify(body) });
   if (!r.ok) throw new Error(await r.text());
 }
+async function sbDelete(table, match) {
+  var r = await fetch(SB_URL+'/rest/v1/'+table+'?'+match, { method:'DELETE', headers: Object.assign({}, HDR, {'Prefer':'return=minimal'}) });
+  if (!r.ok) throw new Error(await r.text());
+}
 
 var state = { players:{a:'',s:''}, sessions:[], tournaments:[], years:[], reglamento:[] };
 var viewYear = String(new Date().getFullYear());
+var viewTournamentId = null;
 var matchCount = 0, matchData = {};
 
 function showToast(msg, err) {
@@ -328,16 +348,14 @@ function showToast(msg, err) {
   t.textContent = msg; t.className = 'toast'+(err?' error':'')+' show';
   setTimeout(function(){ t.classList.remove('show'); }, 2500);
 }
-function hideLoading() {
-  document.getElementById('loading-overlay').style.display = 'none';
-}
+
+function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
 
 function hideSplash() {
-  var splash = document.getElementById('splash-screen');
-  splash.style.opacity = '0';
-  setTimeout(function(){ splash.style.display = 'none'; }, 400);
+  var s = document.getElementById('splash-screen');
+  s.style.opacity = '0';
+  setTimeout(function(){ s.style.display = 'none'; }, 400);
 }
-
 setTimeout(hideSplash, 1000);
 
 async function loadAll() {
@@ -347,12 +365,19 @@ async function loadAll() {
     state.tournaments = await sbGet('tournaments');
     state.sessions = await sbGet('sessions', 'order=created_at.asc');
     await loadReglamento();
+
     var ySet = {};
     state.tournaments.forEach(function(t){ ySet[t.year]=true; });
     state.sessions.forEach(function(s){ ySet[s.year]=true; });
     state.years = Object.keys(ySet).sort();
     if (!state.years.length) state.years = [viewYear];
     if (state.years.indexOf(viewYear) === -1) viewYear = state.years[state.years.length-1];
+
+    // default to active tournament of current year
+    var yT = state.tournaments.filter(function(t){ return t.year===viewYear; });
+    var active = yT.find(function(t){ return t.status==='active'; });
+    viewTournamentId = active ? active.id : (yT.length ? yT[0].id : null);
+
     hideLoading();
     renderAll();
     addMatchBlock();
@@ -363,10 +388,12 @@ async function loadAll() {
   }
 }
 
+// ── RENDER ALL ───────────────────────────────────────────────────
 function renderAll() {
   var na = state.players.a || 'Jugador A';
   var ns = state.players.s || 'Jugador S';
-  document.getElementById('header-sub').textContent = 'temporada '+viewYear;
+
+  document.getElementById('header-sub').textContent = 'temporada ' + viewYear;
   document.getElementById('year-label').textContent = viewYear;
   document.getElementById('cfg-year').textContent = viewYear;
   document.getElementById('cfg-na').value = na;
@@ -377,14 +404,56 @@ function renderAll() {
   document.getElementById('av-s').textContent = ns[0].toUpperCase();
   document.getElementById('stat-la').textContent = 'Win% '+na.split(' ')[0];
   document.getElementById('stat-ls').textContent = 'Win% '+ns.split(' ')[0];
+  document.getElementById('wr-na').textContent = na;
+  document.getElementById('wr-ns').textContent = ns;
+
   var nt = document.getElementById('new-t-status');
   if(nt){ nt.options[2].text='Ganado por '+na; nt.options[3].text='Ganado por '+ns; }
 
+  renderTournamentTabs();
+  renderTournamentDetail();
+  renderCargarTournamentSelector();
+  renderYears();
+  renderTournaments();
+  renderSessionsList();
+}
+
+// ── TOURNAMENT TABS (pestaña Torneo) ─────────────────────────────
+function renderTournamentTabs() {
+  var list = document.getElementById('tournament-tabs-list');
+  list.innerHTML = '';
   var yT = state.tournaments.filter(function(t){ return t.year===viewYear; });
-  var yS = state.sessions.filter(function(s){ return s.year===viewYear; });
+  if (!yT.length) {
+    list.innerHTML = '<div class="empty-state">No hay torneos para este año.<br>Agregá uno desde Configurar.</div>';
+    document.getElementById('torneo-detail').style.display = 'none';
+    return;
+  }
+  yT.forEach(function(t) {
+    var div = document.createElement('div');
+    div.className = 'tournament-tab' + (t.id===viewTournamentId ? ' active' : '');
+    var badgeCls = t.status==='active'?'tt-active':t.status==='pending'?'tt-pending':'tt-won';
+    var badgeTxt = t.status==='active'?'En curso':t.status==='pending'?'Próximo':t.status==='won-a'?'Ganó '+state.players.a:'Ganó '+state.players.s;
+    var sessCount = state.sessions.filter(function(s){ return s.tournament_id===t.id; }).length;
+    div.innerHTML = '<div class="tt-icon">'+(t.icon||'🏆')+'</div>'
+      +'<div class="tt-info"><div class="tt-name">'+t.name+'</div>'
+      +'<div class="tt-sub">'+sessCount+' sesión'+(sessCount!==1?'es':'')+'</div></div>'
+      +'<span class="tt-badge '+badgeCls+'">'+badgeTxt+'</span>';
+    div.onclick = function(){ viewTournamentId=t.id; renderTournamentTabs(); renderTournamentDetail(); };
+    list.appendChild(div);
+  });
+}
+
+// ── TOURNAMENT DETAIL ─────────────────────────────────────────────
+function renderTournamentDetail() {
+  var detail = document.getElementById('torneo-detail');
+  if (!viewTournamentId) { detail.style.display='none'; return; }
+  detail.style.display = 'block';
+
+  var na = state.players.a||'A', ns = state.players.s||'S';
+  var tSessions = state.sessions.filter(function(s){ return s.tournament_id===viewTournamentId; });
 
   var wA=0,wS=0,rWA=0,rTA=0,lWA=0,lTA=0,rWS=0,rTS=0,lWS=0,lTS=0,hasBall=false,all=[];
-  yS.forEach(function(s){
+  tSessions.forEach(function(s){
     (s.matches||[]).forEach(function(m){
       all.push(m);
       if(m.winner==='a')wA++;else wS++;
@@ -410,7 +479,6 @@ function renderAll() {
 
   var wrSec=document.getElementById('wr-section'); wrSec.style.display=hasBall?'block':'none';
   if(hasBall){
-    document.getElementById('wr-na').textContent=na; document.getElementById('wr-ns').textContent=ns;
     var rpa=rTA>0?Math.round(rWA/rTA*100):50, lpa=lTA>0?Math.round(lWA/lTA*100):50;
     var rps=rTS>0?Math.round(rWS/rTS*100):50, lps=lTS>0?Math.round(lWS/lTS*100):50;
     document.getElementById('wr-numa').textContent='Rayadas '+rpa+'% · Lisas '+lpa+'%';
@@ -419,69 +487,35 @@ function renderAll() {
     document.getElementById('wr-sr').style.width=rps+'%'; document.getElementById('wr-sl').style.width=lps+'%';
   }
 
-  var pSec=document.getElementById('prizes-section'), pList=document.getElementById('prizes-list');
-  if(!yT.length){ pSec.style.display='none'; }
-  else {
-    pSec.style.display='block'; pList.innerHTML='';
-    yT.forEach(function(t){
-      var cls='prize'+(t.status==='active'?' active':'')+(t.status==='won-a'||t.status==='won-s'?' won':'');
-      var sub=t.description||'';
-      if(t.status==='won-a')sub='Ganado por '+na; if(t.status==='won-s')sub='Ganado por '+ns;
-      var badge=t.status==='active'?'<span class="prize-active-badge">En curso</span>':'';
-      var d=document.createElement('div'); d.className=cls;
-      d.innerHTML='<div class="prize-icon-wrap">'+(t.icon||'🏆')+'</div><div class="prize-info"><div class="prize-name">'+t.name+'</div>'+(sub?'<div class="prize-sub">'+sub+'</div>':'')+'</div>'+badge;
-      pList.appendChild(d);
-    });
-  }
-
   var hist=document.getElementById('history-list'); hist.innerHTML='';
-  if(!yS.length){ hist.innerHTML='<div class="empty-state">Todavía no hay partidas cargadas</div>'; }
-  else {
-    yS.slice().reverse().forEach(function(s,si){
-      var hdr=document.createElement('div'); hdr.className='session-header';
-      hdr.textContent='Sesión '+(yS.length-si)+' · '+s.date; hist.appendChild(hdr);
-      (s.matches||[]).forEach(function(m){
-        var wn=m.winner==='a'?na:ns, pc=m.winner==='a'?'pill-a':'pill-s', detail='';
-        if(m.ballA&&m.ballS){ var ba=m.ballA==='r'?'Rayadas':'Lisas', bs=m.ballS==='r'?'Rayadas':'Lisas'; detail='<div class="match-detail">'+na+': '+ba+' · '+ns+': '+bs+'</div>'; }
-        var row=document.createElement('div'); row.className='match-row';
-        row.innerHTML='<div><div class="match-winner">'+wn+' ganó</div>'+detail+'</div><span class="pill '+pc+'">'+wn+'</span>';
-        hist.appendChild(row);
-      });
+  if(!tSessions.length){ hist.innerHTML='<div class="empty-state">Todavía no hay partidas en este torneo</div>'; return; }
+  tSessions.slice().reverse().forEach(function(s,si){
+    var hdr=document.createElement('div'); hdr.className='session-header';
+    hdr.textContent='Sesión '+(tSessions.length-si)+' · '+s.date; hist.appendChild(hdr);
+    (s.matches||[]).forEach(function(m){
+      var wn=m.winner==='a'?na:ns, pc=m.winner==='a'?'pill-a':'pill-s', detail='';
+      if(m.ballA&&m.ballS){ var ba=m.ballA==='r'?'Rayadas':'Lisas', bs=m.ballS==='r'?'Rayadas':'Lisas'; detail='<div class="match-detail">'+na+': '+ba+' · '+ns+': '+bs+'</div>'; }
+      var row=document.createElement('div'); row.className='match-row';
+      row.innerHTML='<div><div class="match-winner">'+wn+' ganó</div>'+detail+'</div><span class="pill '+pc+'">'+wn+'</span>';
+      hist.appendChild(row);
     });
-  }
-
-  var tourSel=document.getElementById('session-tournament');
-  tourSel.innerHTML='<option value="">Sin torneo específico</option>';
-  yT.forEach(function(t){ var o=document.createElement('option'); o.value=t.id; o.textContent=t.name; if(t.status==='active')o.selected=true; tourSel.appendChild(o); });
-
-  renderYears(); renderTournaments();
-}
-
-function renderYears(){
-  var yl=document.getElementById('years-list'); yl.innerHTML='';
-  state.years.forEach(function(y){
-    var sc=state.sessions.filter(function(s){return s.year===y;}).length;
-    var d=document.createElement('div'); d.className='config-item';
-    d.innerHTML='<div class="config-item-info"><div class="config-item-name">'+y+'</div><div class="config-item-sub">'+sc+' sesiones</div></div><button class="icon-btn" onclick="setViewYear(\''+y+'\')">Ver ›</button>';
-    yl.appendChild(d);
   });
 }
 
-function renderTournaments(){
-  var tl=document.getElementById('tournaments-list'); tl.innerHTML='';
-  var na=state.players.a||'A', ns=state.players.s||'S';
-  var yT=state.tournaments.filter(function(t){return t.year===viewYear;});
-  if(!yT.length){ tl.innerHTML='<div class="empty-state" style="padding:16px 0 8px;">No hay torneos para este año</div>'; return; }
+// ── CARGAR ───────────────────────────────────────────────────────
+function renderCargarTournamentSelector() {
+  var sel = document.getElementById('session-tournament');
+  var prev = sel.value;
+  sel.innerHTML = '';
+  var yT = state.tournaments.filter(function(t){ return t.year===viewYear; });
+  if (!yT.length) {
+    sel.innerHTML = '<option value="">— Primero agregá un torneo —</option>';
+    return;
+  }
   yT.forEach(function(t){
-    var sl=t.status==='active'?'sp-active':t.status==='pending'?'sp-pending':'sp-won';
-    var st=t.status==='active'?'En curso':t.status==='pending'?'Próximo':t.status==='won-a'?'Ganado por '+na:'Ganado por '+ns;
-    var d=document.createElement('div'); d.className='config-item'; d.id='ti-'+t.id;
-    d.innerHTML='<div class="config-item-icon">'+(t.icon||'🏆')+'</div>'
-      +'<div class="config-item-info" id="td-'+t.id+'"><div class="config-item-name">'+t.name+'</div></div>'
-      +'<span class="status-pill '+sl+'" style="margin-right:4px;">'+st+'</span>'
-      +'<button class="icon-btn" onclick="editTName(\''+t.id+'\')">✏️</button>'
-      +'<button class="icon-btn" onclick="cycleStatus(\''+t.id+'\')">↻</button>';
-    tl.appendChild(d);
+    var o=document.createElement('option'); o.value=t.id; o.textContent=t.name;
+    if(t.id===prev || t.status==='active') o.selected=true;
+    sel.appendChild(o);
   });
 }
 
@@ -516,6 +550,8 @@ function selW(n,p){ ['a','s'].forEach(function(x){var el=document.getElementById
 function selB(n,pl,tp){ ['r','l'].forEach(function(t){var el=document.getElementById('b-'+n+'-'+pl+'-'+t);if(el)el.classList.remove('sel-r','sel-l');}); document.getElementById('b-'+n+'-'+pl+'-'+tp).classList.add('sel-'+tp); if(pl==='a')matchData[n].ballA=tp;else matchData[n].ballS=tp; }
 
 async function saveSession(){
+  var tid = document.getElementById('session-tournament').value;
+  if(!tid){ showToast('Seleccioná un torneo',true); return; }
   var active=Object.keys(matchData).filter(function(n){return document.getElementById('match-block-'+n);});
   if(!active.length){showToast('Agregá al menos una partida',true);return;}
   for(var i=0;i<active.length;i++){
@@ -527,20 +563,105 @@ async function saveSession(){
   try {
     var today=new Date(), ds=today.getDate()+'/'+(today.getMonth()+1)+'/'+today.getFullYear();
     var matches=active.map(function(n){var m=matchData[n];return{winner:m.winner,ballA:m.track?m.ballA:null,ballS:m.track?m.ballS:null};});
-    await sbInsert('sessions',{year:viewYear,date:ds,tournament_id:document.getElementById('session-tournament').value||null,matches:matches});
+    var t=state.tournaments.find(function(x){return x.id===tid;});
+    await sbInsert('sessions',{year:t?t.year:viewYear, date:ds, tournament_id:tid, matches:matches});
     state.sessions=await sbGet('sessions','order=created_at.asc');
     matchData={}; matchCount=0; document.getElementById('matches-container').innerHTML='';
+    viewTournamentId=tid;
     addMatchBlock(); renderAll(); switchTabById('torneo'); showToast('Sesión guardada ✓');
   } catch(e){ showToast('Error al guardar. Revisá la conexión.',true); console.error(e); }
   btn.disabled=false; btn.textContent='Guardar sesión';
 }
 
+// ── CONFIG ───────────────────────────────────────────────────────
 async function savePlayers(){
   var a=(document.getElementById('cfg-na').value||'').trim();
   var s=(document.getElementById('cfg-ns').value||'').trim();
   if(!a||!s){showToast('Completá los dos nombres',true);return;}
   try{ await sbUpdate('players','key=eq.a',{name:a}); await sbUpdate('players','key=eq.s',{name:s}); state.players.a=a; state.players.s=s; renderAll(); showToast('Nombres guardados'); }
   catch(e){ showToast('Error al guardar',true); console.error(e); }
+}
+
+function renderYears(){
+  var yl=document.getElementById('years-list'); yl.innerHTML='';
+  state.years.forEach(function(y){
+    var sc=state.sessions.filter(function(s){return s.year===y;}).length;
+    var d=document.createElement('div'); d.className='config-item';
+    d.innerHTML='<div class="config-item-info"><div class="config-item-name">'+y+'</div><div class="config-item-sub">'+sc+' sesiones</div></div><button class="icon-btn" onclick="setViewYear(\''+y+'\')">Ver ›</button>';
+    yl.appendChild(d);
+  });
+}
+
+function renderTournaments(){
+  var tl=document.getElementById('tournaments-list'); tl.innerHTML='';
+  var na=state.players.a||'A', ns=state.players.s||'S';
+  var yT=state.tournaments.filter(function(t){return t.year===viewYear;});
+  if(!yT.length){ tl.innerHTML='<div class="empty-state" style="padding:16px 0 8px;">No hay torneos para este año</div>'; return; }
+  yT.forEach(function(t){
+    var sl=t.status==='active'?'sp-active':t.status==='pending'?'sp-pending':'sp-won';
+    var st=t.status==='active'?'En curso':t.status==='pending'?'Próximo':t.status==='won-a'?'Ganado por '+na:'Ganado por '+ns;
+    var d=document.createElement('div'); d.className='config-item'; d.id='ti-'+t.id;
+    d.innerHTML='<div class="config-item-icon">'+(t.icon||'🏆')+'</div>'
+      +'<div class="config-item-info" id="td-'+t.id+'"><div class="config-item-name">'+t.name+'</div></div>'
+      +'<span class="status-pill '+sl+'" style="margin-right:4px;">'+st+'</span>'
+      +'<button class="icon-btn" onclick="editTName(\''+t.id+'\')">✏️</button>'
+      +'<button class="icon-btn" onclick="cycleStatus(\''+t.id+'\')">↻</button>';
+    tl.appendChild(d);
+  });
+}
+
+// ── SESSIONS LIST (edit/delete) ───────────────────────────────────
+function renderSessionsList(){
+  var sl=document.getElementById('sessions-list'); sl.innerHTML='';
+  var na=state.players.a||'A', ns=state.players.s||'S';
+  var yT=state.tournaments.filter(function(t){return t.year===viewYear;});
+  if(!yT.length){ sl.innerHTML='<div class="empty-state" style="padding:12px 0;">No hay torneos en este año</div>'; return; }
+
+  yT.forEach(function(t){
+    var tSessions=state.sessions.filter(function(s){return s.tournament_id===t.id;});
+    var header=document.createElement('div');
+    header.style.cssText='font-size:13px;font-weight:600;color:var(--text2);margin:12px 0 6px;display:flex;align-items:center;gap:8px;';
+    header.innerHTML='<span style="font-size:16px;">'+(t.icon||'🏆')+'</span>'+t.name+' <span style="font-family:var(--mono);font-size:10px;color:var(--text3);">('+tSessions.length+')</span>';
+    sl.appendChild(header);
+
+    if(!tSessions.length){
+      var empty=document.createElement('div'); empty.style.cssText='font-family:var(--mono);font-size:11px;color:var(--text3);padding:8px 0 4px;';
+      empty.textContent='Sin sesiones'; sl.appendChild(empty); return;
+    }
+
+    tSessions.forEach(function(s, si){
+      var block=document.createElement('div'); block.className='session-block'; block.id='sb-'+s.id;
+      var matchCount=(s.matches||[]).length;
+      var wA=(s.matches||[]).filter(function(m){return m.winner==='a';}).length;
+      var wS=matchCount-wA;
+      block.innerHTML='<div class="session-block-header">'
+        +'<span class="session-block-date">Sesión '+(si+1)+' · '+s.date+' · '+matchCount+' partida'+(matchCount!==1?'s':'')+'</span>'
+        +'<div class="session-block-actions">'
+        +'<button class="btn-del-sm" onclick="deleteSession(\''+s.id+'\')" title="Eliminar sesión">🗑</button>'
+        +'</div></div>'
+        +'<div class="session-matches">'
+        +(s.matches||[]).map(function(m){
+          var wn=m.winner==='a'?na:ns;
+          var pc=m.winner==='a'?'pill-a':'pill-s';
+          var detail='';
+          if(m.ballA&&m.ballS){ detail=' <span style="font-family:var(--mono);font-size:10px;color:var(--text3);">'+( m.ballA==='r'?'Ray':'Lis')+'/'+( m.ballS==='r'?'Ray':'Lis')+'</span>'; }
+          return '<div class="session-match-row"><span style="font-weight:600;">'+wn+' ganó</span>'+detail+'<span class="pill '+pc+'">'+wn+'</span></div>';
+        }).join('')
+        +'</div>';
+      sl.appendChild(block);
+    });
+  });
+
+  document.getElementById('cfg-sessions-tournament-name').textContent = viewYear;
+}
+
+async function deleteSession(id){
+  if(!confirm('¿Seguro que querés eliminar esta sesión? Se borran todas las partidas de esa sesión.'))return;
+  try{
+    await sbDelete('sessions','id=eq.'+id);
+    state.sessions=state.sessions.filter(function(s){return s.id!==id;});
+    renderAll(); showToast('Sesión eliminada');
+  }catch(e){ showToast('Error al eliminar',true); console.error(e); }
 }
 
 function showAddTournament(){ document.getElementById('add-tournament-form').style.display='block'; }
@@ -558,6 +679,7 @@ async function saveNewTournament(){
     if(state.years.indexOf(viewYear)===-1){state.years.push(viewYear);state.years.sort();}
     ['new-t-name','new-t-icon','new-t-desc'].forEach(function(x){document.getElementById(x).value='';});
     document.getElementById('add-tournament-form').style.display='none';
+    if(!viewTournamentId) viewTournamentId=id;
     renderAll(); showToast('Torneo guardado');
   }catch(e){ showToast('Error al guardar torneo',true); console.error(e); }
 }
@@ -565,7 +687,7 @@ async function saveNewTournament(){
 function editTName(id){
   var t=state.tournaments.find(function(x){return x.id===id;}); if(!t)return;
   var div=document.getElementById('td-'+id);
-  div.innerHTML='<div class="edit-inline"><input class="text-input" id="en-'+id+'" value="'+t.name+'" style="margin-bottom:0;"/><button class="btn-ok" onclick="saveTName(\''+id+'\')">OK</button></div>';
+  div.innerHTML='<div class="edit-inline"><input class="text-input" id="en-'+id+'" value="'+escHtml(t.name)+'" style="margin-bottom:0;"/><button class="btn-ok" onclick="saveTName(\''+id+'\')">OK</button></div>';
   document.getElementById('en-'+id).focus();
 }
 
@@ -584,12 +706,15 @@ async function cycleStatus(id){
   catch(e){ showToast('Error al actualizar',true); console.error(e); }
 }
 
-function setViewYear(y){ viewYear=y; renderAll(); switchTabById('torneo'); }
-function changeYear(dir){ var idx=state.years.indexOf(viewYear), ni=idx+dir; if(ni>=0&&ni<state.years.length){viewYear=state.years[ni];renderAll();} }
-function addYear(){ var y=prompt('¿Qué año querés agregar?'); if(!y||isNaN(y))return; y=y.trim(); if(state.years.indexOf(y)===-1){state.years.push(y);state.years.sort();} viewYear=y; renderAll(); showToast('Año '+y+' listo'); }
-
-function switchTab(name,btn){ document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');}); document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');}); if(btn)btn.classList.add('active'); document.getElementById('view-'+name).classList.add('active'); if(name==='reglamento') renderReglamento(); }
-function switchTabById(name){ var names=['torneo','cargar','config','reglamento']; document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',names[i]===name);}); document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');}); document.getElementById('view-'+name).classList.add('active'); }
+function setViewYear(y){
+  viewYear=y;
+  var yT=state.tournaments.filter(function(t){return t.year===y;});
+  var active=yT.find(function(t){return t.status==='active';});
+  viewTournamentId=active?active.id:(yT.length?yT[0].id:null);
+  renderAll(); switchTabById('torneo');
+}
+function changeYear(dir){ var idx=state.years.indexOf(viewYear), ni=idx+dir; if(ni>=0&&ni<state.years.length){ setViewYear(state.years[ni]); } }
+function addYear(){ var y=prompt('¿Qué año querés agregar?'); if(!y||isNaN(y))return; y=y.trim(); if(state.years.indexOf(y)===-1){state.years.push(y);state.years.sort();} viewYear=y; viewTournamentId=null; renderAll(); showToast('Año '+y+' listo'); }
 
 // ── REGLAMENTO ───────────────────────────────────────────────────
 async function loadReglamento(){
@@ -620,10 +745,8 @@ function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').r
 function showAddArticulo(){
   document.getElementById('btn-add-articulo').style.display='none';
   var fc=document.getElementById('reglamento-form-container');
-  fc.innerHTML='<div class="reg-form">'
-    +'<div class="reg-form-title">Nuevo artículo</div>'
-    +'<span class="form-label">Título</span>'
-    +'<input class="text-input" id="reg-new-titulo" placeholder="Ej: Regla 1 - Saque inicial" />'
+  fc.innerHTML='<div class="reg-form"><div class="reg-form-title">Nuevo artículo</div>'
+    +'<span class="form-label">Título</span><input class="text-input" id="reg-new-titulo" placeholder="Ej: Regla 1 - Saque inicial" />'
     +'<span class="form-label" style="margin-top:4px;">Contenido</span>'
     +'<textarea class="text-input" id="reg-new-contenido" placeholder="Describí la regla..."></textarea>'
     +'<div style="display:flex;gap:8px;margin-top:4px;">'
@@ -644,10 +767,9 @@ async function saveNewArticulo(){
   if(!titulo){showToast('Poné un título',true);return;}
   if(!contenido){showToast('Escribí el contenido',true);return;}
   var id='r-'+Date.now();
-  var orden=state.reglamento.length;
   try{
-    await sbInsert('reglamento',{id:id,titulo:titulo,contenido:contenido,orden:orden});
-    state.reglamento.push({id:id,titulo:titulo,contenido:contenido,orden:orden});
+    await sbInsert('reglamento',{id:id,titulo:titulo,contenido:contenido,orden:state.reglamento.length});
+    state.reglamento.push({id:id,titulo:titulo,contenido:contenido,orden:state.reglamento.length});
     cancelRegForm(); renderReglamento(); showToast('Artículo guardado');
   }catch(e){ showToast('Error al guardar',true); console.error(e); }
 }
@@ -656,8 +778,7 @@ function editArticulo(id){
   var art=state.reglamento.find(function(x){return x.id===id;}); if(!art)return;
   var d=document.getElementById('reg-'+id);
   d.innerHTML='<div class="reg-form-title">Editando artículo</div>'
-    +'<span class="form-label">Título</span>'
-    +'<input class="text-input" id="reg-edit-titulo-'+id+'" value="'+escHtml(art.titulo)+'" />'
+    +'<span class="form-label">Título</span><input class="text-input" id="reg-edit-titulo-'+id+'" value="'+escHtml(art.titulo)+'" />'
     +'<span class="form-label" style="margin-top:4px;">Contenido</span>'
     +'<textarea class="text-input" id="reg-edit-contenido-'+id+'">'+escHtml(art.contenido)+'</textarea>'
     +'<div style="display:flex;gap:8px;margin-top:4px;">'
@@ -683,11 +804,25 @@ async function saveEditArticulo(id){
 async function deleteArticulo(id){
   if(!confirm('¿Seguro que querés eliminar este artículo?'))return;
   try{
-    var r=await fetch(SB_URL+'/rest/v1/reglamento?id=eq.'+id,{method:'DELETE',headers:Object.assign({},HDR,{'Prefer':'return=minimal'})});
-    if(!r.ok)throw new Error(await r.text());
+    await sbDelete('reglamento','id=eq.'+id);
     state.reglamento=state.reglamento.filter(function(x){return x.id!==id;});
     renderReglamento(); showToast('Artículo eliminado');
   }catch(e){ showToast('Error al eliminar',true); console.error(e); }
+}
+
+// ── TABS ─────────────────────────────────────────────────────────
+function switchTab(name,btn){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+  document.getElementById('view-'+name).classList.add('active');
+  if(name==='reglamento') renderReglamento();
+}
+function switchTabById(name){
+  var names=['torneo','cargar','config','reglamento'];
+  document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',names[i]===name);});
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
+  document.getElementById('view-'+name).classList.add('active');
 }
 
 loadAll();
