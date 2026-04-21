@@ -149,6 +149,18 @@ body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index
 .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(10px); background:var(--accent); color:#0d0d0f; padding:10px 20px; border-radius:99px; font-size:13px; font-weight:700; opacity:0; transition:all 0.25s; pointer-events:none; z-index:999; white-space:nowrap; }
 .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 .toast.error { background:#f05a5a; color:#fff; }
+.reglamento-item { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:12px; }
+.reglamento-titulo { font-size:15px; font-weight:700; color:var(--text); margin-bottom:8px; }
+.reglamento-contenido { font-size:13px; color:var(--text2); line-height:1.7; white-space:pre-wrap; }
+.reglamento-actions { display:flex; gap:8px; margin-top:14px; padding-top:14px; border-top:1px solid var(--border); }
+.reglamento-actions button { flex:1; padding:8px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; font-family:var(--font); cursor:pointer; transition:all 0.15s; }
+.btn-edit-reg { background:transparent; border:1px solid var(--border2); color:var(--text2); }
+.btn-edit-reg:hover { background:var(--surface2); color:var(--text); }
+.btn-del-reg { background:transparent; border:1px solid rgba(240,90,90,0.3); color:#f05a5a; }
+.btn-del-reg:hover { background:rgba(240,90,90,0.08); }
+.reg-form { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:12px; }
+.reg-form-title { font-family:var(--mono); font-size:10px; color:var(--accent); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:14px; }
+textarea.text-input { resize:vertical; min-height:100px; }
 </style>
 </head>
 <body>
@@ -169,6 +181,7 @@ body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index
     <button class="tab active" onclick="switchTab('torneo',this)">Torneo</button>
     <button class="tab" onclick="switchTab('cargar',this)">Cargar</button>
     <button class="tab" onclick="switchTab('config',this)">Configurar</button>
+    <button class="tab" onclick="switchTab('reglamento',this)">Reglamento</button>
   </div>
 
   <!-- TORNEO -->
@@ -272,9 +285,14 @@ body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index
       </div>
     </div>
   </div>
-</div>
+  <!-- REGLAMENTO -->
+  <div id="view-reglamento" class="view">
+    <div id="reglamento-list"></div>
+    <div id="reglamento-form-container"></div>
+    <button class="btn-secondary" onclick="showAddArticulo()" id="btn-add-articulo">+ Agregar artículo</button>
+  </div>
 
-<div class="toast" id="toast"></div>
+</div>
 
 <script>
 var SB_URL = 'https://brxxpumholxkpldzoqwh.supabase.co';
@@ -295,7 +313,7 @@ async function sbUpdate(table, match, body) {
   if (!r.ok) throw new Error(await r.text());
 }
 
-var state = { players:{a:'',s:''}, sessions:[], tournaments:[], years:[] };
+var state = { players:{a:'',s:''}, sessions:[], tournaments:[], years:[], reglamento:[] };
 var viewYear = String(new Date().getFullYear());
 var matchCount = 0, matchData = {};
 
@@ -312,6 +330,7 @@ async function loadAll() {
     players.forEach(function(p){ state.players[p.key] = p.name; });
     state.tournaments = await sbGet('tournaments');
     state.sessions = await sbGet('sessions', 'order=created_at.asc');
+    await loadReglamento();
     var ySet = {};
     state.tournaments.forEach(function(t){ ySet[t.year]=true; });
     state.sessions.forEach(function(s){ ySet[s.year]=true; });
@@ -553,8 +572,107 @@ function setViewYear(y){ viewYear=y; renderAll(); switchTabById('torneo'); }
 function changeYear(dir){ var idx=state.years.indexOf(viewYear), ni=idx+dir; if(ni>=0&&ni<state.years.length){viewYear=state.years[ni];renderAll();} }
 function addYear(){ var y=prompt('¿Qué año querés agregar?'); if(!y||isNaN(y))return; y=y.trim(); if(state.years.indexOf(y)===-1){state.years.push(y);state.years.sort();} viewYear=y; renderAll(); showToast('Año '+y+' listo'); }
 
-function switchTab(name,btn){ document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');}); document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');}); if(btn)btn.classList.add('active'); document.getElementById('view-'+name).classList.add('active'); }
-function switchTabById(name){ var names=['torneo','cargar','config']; document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',names[i]===name);}); document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');}); document.getElementById('view-'+name).classList.add('active'); }
+function switchTab(name,btn){ document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');}); document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');}); if(btn)btn.classList.add('active'); document.getElementById('view-'+name).classList.add('active'); if(name==='reglamento') renderReglamento(); }
+function switchTabById(name){ var names=['torneo','cargar','config','reglamento']; document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',names[i]===name);}); document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');}); document.getElementById('view-'+name).classList.add('active'); }
+
+// ── REGLAMENTO ───────────────────────────────────────────────────
+async function loadReglamento(){
+  try{ state.reglamento = await sbGet('reglamento','order=orden.asc,created_at.asc'); }
+  catch(e){ state.reglamento=[]; console.error(e); }
+}
+
+function renderReglamento(){
+  var list=document.getElementById('reglamento-list'); list.innerHTML='';
+  if(!state.reglamento||!state.reglamento.length){
+    list.innerHTML='<div class="empty-state">No hay artículos todavía. Agregá el primero.</div>';
+    return;
+  }
+  state.reglamento.forEach(function(art){
+    var d=document.createElement('div'); d.className='reglamento-item'; d.id='reg-'+art.id;
+    d.innerHTML='<div class="reglamento-titulo">'+escHtml(art.titulo)+'</div>'
+      +'<div class="reglamento-contenido">'+escHtml(art.contenido)+'</div>'
+      +'<div class="reglamento-actions">'
+      +'<button class="btn-edit-reg" onclick="editArticulo(\''+art.id+'\')">Editar</button>'
+      +'<button class="btn-del-reg" onclick="deleteArticulo(\''+art.id+'\')">Eliminar</button>'
+      +'</div>';
+    list.appendChild(d);
+  });
+}
+
+function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function showAddArticulo(){
+  document.getElementById('btn-add-articulo').style.display='none';
+  var fc=document.getElementById('reglamento-form-container');
+  fc.innerHTML='<div class="reg-form">'
+    +'<div class="reg-form-title">Nuevo artículo</div>'
+    +'<span class="form-label">Título</span>'
+    +'<input class="text-input" id="reg-new-titulo" placeholder="Ej: Regla 1 - Saque inicial" />'
+    +'<span class="form-label" style="margin-top:4px;">Contenido</span>'
+    +'<textarea class="text-input" id="reg-new-contenido" placeholder="Describí la regla..."></textarea>'
+    +'<div style="display:flex;gap:8px;margin-top:4px;">'
+    +'<button class="btn-primary" style="margin-bottom:0;" onclick="saveNewArticulo()">Guardar</button>'
+    +'<button class="btn-secondary" style="margin-bottom:0;" onclick="cancelRegForm()">Cancelar</button>'
+    +'</div></div>';
+  document.getElementById('reg-new-titulo').focus();
+}
+
+function cancelRegForm(){
+  document.getElementById('reglamento-form-container').innerHTML='';
+  document.getElementById('btn-add-articulo').style.display='';
+}
+
+async function saveNewArticulo(){
+  var titulo=(document.getElementById('reg-new-titulo').value||'').trim();
+  var contenido=(document.getElementById('reg-new-contenido').value||'').trim();
+  if(!titulo){showToast('Poné un título',true);return;}
+  if(!contenido){showToast('Escribí el contenido',true);return;}
+  var id='r-'+Date.now();
+  var orden=state.reglamento.length;
+  try{
+    await sbInsert('reglamento',{id:id,titulo:titulo,contenido:contenido,orden:orden});
+    state.reglamento.push({id:id,titulo:titulo,contenido:contenido,orden:orden});
+    cancelRegForm(); renderReglamento(); showToast('Artículo guardado');
+  }catch(e){ showToast('Error al guardar',true); console.error(e); }
+}
+
+function editArticulo(id){
+  var art=state.reglamento.find(function(x){return x.id===id;}); if(!art)return;
+  var d=document.getElementById('reg-'+id);
+  d.innerHTML='<div class="reg-form-title">Editando artículo</div>'
+    +'<span class="form-label">Título</span>'
+    +'<input class="text-input" id="reg-edit-titulo-'+id+'" value="'+escHtml(art.titulo)+'" />'
+    +'<span class="form-label" style="margin-top:4px;">Contenido</span>'
+    +'<textarea class="text-input" id="reg-edit-contenido-'+id+'">'+escHtml(art.contenido)+'</textarea>'
+    +'<div style="display:flex;gap:8px;margin-top:4px;">'
+    +'<button class="btn-primary" style="margin-bottom:0;" onclick="saveEditArticulo(\''+id+'\')">Guardar</button>'
+    +'<button class="btn-secondary" style="margin-bottom:0;" onclick="renderReglamento()">Cancelar</button>'
+    +'</div>';
+  document.getElementById('reg-edit-titulo-'+id).focus();
+}
+
+async function saveEditArticulo(id){
+  var titulo=(document.getElementById('reg-edit-titulo-'+id).value||'').trim();
+  var contenido=(document.getElementById('reg-edit-contenido-'+id).value||'').trim();
+  if(!titulo){showToast('Poné un título',true);return;}
+  if(!contenido){showToast('Escribí el contenido',true);return;}
+  try{
+    await sbUpdate('reglamento','id=eq.'+id,{titulo:titulo,contenido:contenido});
+    var art=state.reglamento.find(function(x){return x.id===id;});
+    if(art){art.titulo=titulo;art.contenido=contenido;}
+    renderReglamento(); showToast('Artículo actualizado');
+  }catch(e){ showToast('Error al actualizar',true); console.error(e); }
+}
+
+async function deleteArticulo(id){
+  if(!confirm('¿Seguro que querés eliminar este artículo?'))return;
+  try{
+    var r=await fetch(SB_URL+'/rest/v1/reglamento?id=eq.'+id,{method:'DELETE',headers:Object.assign({},HDR,{'Prefer':'return=minimal'})});
+    if(!r.ok)throw new Error(await r.text());
+    state.reglamento=state.reglamento.filter(function(x){return x.id!==id;});
+    renderReglamento(); showToast('Artículo eliminado');
+  }catch(e){ showToast('Error al eliminar',true); console.error(e); }
+}
 
 loadAll();
 </script>
