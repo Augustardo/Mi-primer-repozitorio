@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Pool Amorch</title>
+<link rel="icon" type="image/png" href="icon.png" />
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
 <style>
 :root {
@@ -161,9 +162,14 @@ body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index
 .reg-form { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:12px; }
 .reg-form-title { font-family:var(--mono); font-size:10px; color:var(--accent); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:14px; }
 textarea.text-input { resize:vertical; min-height:100px; }
+@keyframes splashPop { 0%{opacity:0;transform:scale(0.85);} 100%{opacity:1;transform:scale(1);} }
 </style>
 </head>
 <body>
+
+<div id="splash-screen" style="position:fixed;inset:0;background:#0d0d0f;display:flex;align-items:center;justify-content:center;z-index:200;transition:opacity 0.4s ease;">
+  <img src="icon.png" style="width:160px;height:160px;object-fit:contain;animation:splashPop 0.5s ease-out;" />
+</div>
 
 <div class="loading-overlay" id="loading-overlay">
   <div class="loading-spinner"></div>
@@ -322,7 +328,17 @@ function showToast(msg, err) {
   t.textContent = msg; t.className = 'toast'+(err?' error':'')+' show';
   setTimeout(function(){ t.classList.remove('show'); }, 2500);
 }
-function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
+function hideLoading() {
+  document.getElementById('loading-overlay').style.display = 'none';
+}
+
+function hideSplash() {
+  var splash = document.getElementById('splash-screen');
+  splash.style.opacity = '0';
+  setTimeout(function(){ splash.style.display = 'none'; }, 400);
+}
+
+setTimeout(hideSplash, 1000);
 
 async function loadAll() {
   try {
