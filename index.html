@@ -43,9 +43,22 @@ body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index
 
 .scoreboard { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px 20px; margin-bottom:12px; display:grid; grid-template-columns:1fr auto 1fr; gap:16px; align-items:center; }
 .player { text-align:center; }
-.player-avatar { width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; margin:0 auto 10px; }
+.player-avatar { width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; margin:0 auto 10px; overflow:hidden; }
 .player-avatar.av-a { background:var(--a-light); color:var(--a-color); border:1px solid rgba(123,110,246,0.25); }
 .player-avatar.av-s { background:var(--s-light); color:var(--s-color); border:1px solid rgba(240,135,90,0.25); }
+.player-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.avatar-sm { width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; overflow:hidden; flex-shrink:0; vertical-align:middle; }
+.avatar-sm.av-a { background:var(--a-light); color:var(--a-color); border:1px solid rgba(123,110,246,0.2); }
+.avatar-sm.av-s { background:var(--s-light); color:var(--s-color); border:1px solid rgba(240,135,90,0.2); }
+.avatar-sm img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.avatar-upload-wrap { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
+.avatar-upload-preview { width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; overflow:hidden; border:2px solid var(--border2); flex-shrink:0; }
+.avatar-upload-preview.av-a { background:var(--a-light); color:var(--a-color); }
+.avatar-upload-preview.av-s { background:var(--s-light); color:var(--s-color); }
+.avatar-upload-preview img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.avatar-upload-btn { font-size:13px; font-weight:600; color:var(--accent); background:none; border:1px solid rgba(200,240,74,0.3); border-radius:var(--radius-sm); padding:8px 14px; cursor:pointer; font-family:var(--font); transition:all 0.15s; }
+.avatar-upload-btn:hover { background:rgba(200,240,74,0.07); }
+.avatar-upload-input { display:none; }
 .player-name { font-size:14px; font-weight:600; color:var(--text2); }
 .player-wins { font-size:48px; font-weight:800; line-height:1; margin:6px 0 4px; letter-spacing:-0.04em; }
 .wins-a { color:var(--a-color); } .wins-s { color:var(--s-color); }
@@ -271,8 +284,30 @@ textarea.text-input { resize:vertical; min-height:100px; }
   <div id="view-config" class="view">
     <div class="card">
       <div class="card-title">Jugadores</div>
-      <div style="margin-bottom:8px;"><span class="form-label">Jugador 1</span><input class="text-input" id="cfg-na" /></div>
-      <div style="margin-bottom:12px;"><span class="form-label">Jugador 2</span><input class="text-input" id="cfg-ns" /></div>
+      <div style="margin-bottom:16px;">
+        <span class="form-label">Jugador 1</span>
+        <div class="avatar-upload-wrap">
+          <div class="avatar-upload-preview av-a" id="preview-a"></div>
+          <div>
+            <button class="avatar-upload-btn" onclick="document.getElementById('file-a').click()">Cambiar foto</button>
+            <input type="file" class="avatar-upload-input" id="file-a" accept="image/*" onchange="uploadAvatar('a',this)" />
+            <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:6px;">JPG, PNG · máx 2MB</div>
+          </div>
+        </div>
+        <input class="text-input" id="cfg-na" />
+      </div>
+      <div style="margin-bottom:12px;">
+        <span class="form-label">Jugador 2</span>
+        <div class="avatar-upload-wrap">
+          <div class="avatar-upload-preview av-s" id="preview-s"></div>
+          <div>
+            <button class="avatar-upload-btn" onclick="document.getElementById('file-s').click()">Cambiar foto</button>
+            <input type="file" class="avatar-upload-input" id="file-s" accept="image/*" onchange="uploadAvatar('s',this)" />
+            <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:6px;">JPG, PNG · máx 2MB</div>
+          </div>
+        </div>
+        <input class="text-input" id="cfg-ns" />
+      </div>
       <button class="btn-primary" onclick="savePlayers()">Guardar nombres</button>
     </div>
     <div class="card">
@@ -341,7 +376,7 @@ async function sbDelete(table, match) {
   if (!r.ok) throw new Error(await r.text());
 }
 
-var state = { players:{a:'',s:''}, sessions:[], tournaments:[], years:[], reglamento:[] };
+var state = { players:{a:'',s:'',avatarA:null,avatarS:null}, sessions:[], tournaments:[], years:[], reglamento:[] };
 var viewYear = String(new Date().getFullYear());
 var viewTournamentId = null;
 var matchCount = 0, matchData = {};
@@ -364,7 +399,11 @@ setTimeout(hideSplash, 1000);
 async function loadAll() {
   try {
     var players = await sbGet('players');
-    players.forEach(function(p){ state.players[p.key] = p.name; });
+    players.forEach(function(p){
+      state.players[p.key] = p.name;
+      if(p.key==='a') state.players.avatarA = p.avatar_url||null;
+      if(p.key==='s') state.players.avatarS = p.avatar_url||null;
+    });
     state.tournaments = await sbGet('tournaments');
     state.sessions = await sbGet('sessions', 'order=created_at.asc');
     await loadReglamento();
@@ -391,6 +430,23 @@ async function loadAll() {
   }
 }
 
+function avatarHtml(key, size, letter) {
+  var url = key==='a' ? state.players.avatarA : state.players.avatarS;
+  var cls = key==='a' ? 'av-a' : 'av-s';
+  if(size==='sm') {
+    return '<div class="avatar-sm '+cls+'">'+(url?'<img src="'+url+'" />':letter)+'</div>';
+  }
+  return url ? '<img src="'+url+'" />' : letter;
+}
+
+function updatePreviews() {
+  var pa = document.getElementById('preview-a');
+  var ps = document.getElementById('preview-s');
+  var na = state.players.a||'A', ns = state.players.s||'S';
+  if(pa) pa.innerHTML = state.players.avatarA ? '<img src="'+state.players.avatarA+'" />' : na[0].toUpperCase();
+  if(ps) ps.innerHTML = state.players.avatarS ? '<img src="'+state.players.avatarS+'" />' : ns[0].toUpperCase();
+}
+
 // ── RENDER ALL ───────────────────────────────────────────────────
 function renderAll() {
   var na = state.players.a || 'Jugador A';
@@ -403,8 +459,9 @@ function renderAll() {
   document.getElementById('cfg-ns').value = ns;
   document.getElementById('name-a').textContent = na;
   document.getElementById('name-s').textContent = ns;
-  document.getElementById('av-a').textContent = na[0].toUpperCase();
-  document.getElementById('av-s').textContent = ns[0].toUpperCase();
+  document.getElementById('av-a').innerHTML = avatarHtml('a','lg',na[0].toUpperCase());
+  document.getElementById('av-s').innerHTML = avatarHtml('s','lg',ns[0].toUpperCase());
+  updatePreviews();
   document.getElementById('stat-la').textContent = 'Win% '+na.split(' ')[0];
   document.getElementById('stat-ls').textContent = 'Win% '+ns.split(' ')[0];
   document.getElementById('wr-na').textContent = na;
@@ -499,7 +556,8 @@ function renderTournamentDetail() {
       var wn=m.winner==='a'?na:ns, pc=m.winner==='a'?'pill-a':'pill-s', detail='';
       if(m.ballA&&m.ballS){ var ba=m.ballA==='r'?'Rayadas':'Lisas', bs=m.ballS==='r'?'Rayadas':'Lisas'; detail='<div class="match-detail">'+na+': '+ba+' · '+ns+': '+bs+'</div>'; }
       var row=document.createElement('div'); row.className='match-row';
-      row.innerHTML='<div><div class="match-winner">'+wn+' ganó</div>'+detail+'</div><span class="pill '+pc+'">'+wn+'</span>';
+      var avHtml=avatarHtml(m.winner,'sm',wn[0].toUpperCase());
+      row.innerHTML='<div style="display:flex;align-items:center;gap:8px;">'+avHtml+'<div><div class="match-winner">'+wn+' ganó</div>'+detail+'</div></div><span class="pill '+pc+'">'+wn+'</span>';
       hist.appendChild(row);
     });
   });
@@ -967,6 +1025,30 @@ function launchFireworks(matchCount){
     else ctx.clearRect(0,0,canvas.width,canvas.height);
   }
   requestAnimationFrame(animate);
+}
+
+// ── AVATAR UPLOAD ────────────────────────────────────────────────
+async function uploadAvatar(key, input) {
+  var file = input.files[0]; if(!file)return;
+  if(file.size > 2*1024*1024){ showToast('La imagen es muy grande (máx 2MB)',true); return; }
+  var ext = file.name.split('.').pop();
+  var path = 'avatar-'+key+'.'+ext;
+  try {
+    // upload to storage
+    var r = await fetch(SB_URL+'/storage/v1/object/avatars/'+path, {
+      method:'POST',
+      headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY, 'Content-Type':file.type, 'x-upsert':'true' },
+      body: file
+    });
+    if(!r.ok) throw new Error(await r.text());
+    var url = SB_URL+'/storage/v1/object/public/avatars/'+path+'?t='+Date.now();
+    await sbUpdate('players','key=eq.'+key,{avatar_url:url});
+    if(key==='a') state.players.avatarA=url;
+    else state.players.avatarS=url;
+    updatePreviews();
+    renderAll();
+    showToast('Foto actualizada ✓');
+  } catch(e){ showToast('Error al subir la foto',true); console.error(e); }
 }
 
 loadAll();
