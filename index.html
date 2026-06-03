@@ -181,6 +181,29 @@ body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index
 .reg-form-title { font-family:var(--mono); font-size:10px; color:var(--accent); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:14px; }
 textarea.text-input { resize:vertical; min-height:100px; }
 
+/* ── HALL OF FAME ── */
+.hof-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px; }
+.hof-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; position:relative; }
+.hof-card img { width:100%; aspect-ratio:1/1; object-fit:cover; display:block; }
+.hof-card-caption { padding:10px 12px; font-size:12px; color:var(--text2); line-height:1.4; font-family:var(--mono); }
+.hof-card-badge { position:absolute; top:8px; left:8px; font-size:10px; padding:3px 8px; border-radius:99px; background:rgba(13,13,15,0.75); backdrop-filter:blur(4px); color:var(--text2); font-family:var(--mono); border:1px solid var(--border2); }
+.hof-empty { text-align:center; padding:60px 20px; font-family:var(--mono); font-size:12px; color:var(--text3); }
+.hof-empty-icon { font-size:40px; margin-bottom:12px; }
+.hof-upload-block { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:12px; }
+.hof-upload-title { font-family:var(--mono); font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent); margin-bottom:16px; }
+.hof-preview-wrap { width:100%; aspect-ratio:16/9; background:var(--surface2); border:1px dashed var(--border2); border-radius:var(--radius-sm); overflow:hidden; display:flex; align-items:center; justify-content:center; margin-bottom:12px; cursor:pointer; transition:border-color 0.15s; }
+.hof-preview-wrap:hover { border-color:rgba(200,240,74,0.4); }
+.hof-preview-wrap img { width:100%; height:100%; object-fit:cover; }
+.hof-preview-placeholder { font-family:var(--mono); font-size:12px; color:var(--text3); text-align:center; }
+.hof-preview-placeholder span { display:block; font-size:28px; margin-bottom:8px; }
+
+/* HOF delete button inside config */
+.hof-config-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:6px; overflow:hidden; display:flex; align-items:center; gap:12px; padding:10px 12px; }
+.hof-config-thumb { width:48px; height:48px; border-radius:6px; object-fit:cover; flex-shrink:0; background:var(--surface); }
+.hof-config-info { flex:1; min-width:0; }
+.hof-config-caption { font-size:12px; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hof-config-sub { font-family:var(--mono); font-size:10px; color:var(--text3); margin-top:2px; }
+
 .loading-overlay { position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:100; flex-direction:column; gap:12px; }
 .loading-spinner { width:32px; height:32px; border:2px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
@@ -213,6 +236,7 @@ textarea.text-input { resize:vertical; min-height:100px; }
     <button class="tab" onclick="switchTab('cargar',this)">Cargar</button>
     <button class="tab" onclick="switchTab('config',this)">Configurar</button>
     <button class="tab" onclick="switchTab('reglamento',this)">Reglamento</button>
+    <button class="tab" onclick="switchTab('hof',this)">Hall of Fame</button>
   </div>
 
   <!-- TORNEO -->
@@ -278,6 +302,26 @@ textarea.text-input { resize:vertical; min-height:100px; }
     <div id="matches-container"></div>
     <button class="btn-secondary" onclick="addMatchBlock()" style="margin-bottom:12px;">+ Más partidas</button>
     <button class="btn-primary" id="save-btn" onclick="saveSession()">Guardar sesión</button>
+
+    <!-- HOF upload -->
+    <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">
+      <div class="hof-upload-block">
+        <div class="hof-upload-title">📸 Agregar foto al Hall of Fame</div>
+        <div class="form-field">
+          <span class="form-label">Torneo</span>
+          <select class="select-field" id="hof-tournament"></select>
+        </div>
+        <input type="file" id="hof-file-input" accept="image/*" style="display:none;" onchange="hofPreviewFile(this)" />
+        <div class="hof-preview-wrap" onclick="document.getElementById('hof-file-input').click()" id="hof-preview-wrap">
+          <div class="hof-preview-placeholder"><span>🖼️</span>Tocá para elegir una foto</div>
+        </div>
+        <div class="form-field">
+          <span class="form-label">Pie de foto <span style="font-family:var(--mono);font-size:10px;color:var(--text3);" id="hof-caption-count">(0/80)</span></span>
+          <input class="text-input" id="hof-caption" maxlength="80" placeholder="Ej: Torneo de mitad de año 🏆" oninput="document.getElementById('hof-caption-count').textContent='('+this.value.length+'/80)'" />
+        </div>
+        <button class="btn-primary" onclick="saveHofPhoto()">Subir foto</button>
+      </div>
+    </div>
   </div>
 
   <!-- CONFIG -->
@@ -340,6 +384,10 @@ textarea.text-input { resize:vertical; min-height:100px; }
       <div class="card-title">Sesiones — <span id="cfg-sessions-tournament-name">seleccioná un torneo arriba</span></div>
       <div id="sessions-list"></div>
     </div>
+    <div class="card">
+      <div class="card-title">Fotos del Hall of Fame</div>
+      <div id="hof-config-list"></div>
+    </div>
   </div>
 
   <!-- REGLAMENTO -->
@@ -347,6 +395,11 @@ textarea.text-input { resize:vertical; min-height:100px; }
     <div id="reglamento-list"></div>
     <div id="reglamento-form-container"></div>
     <button class="btn-secondary" onclick="showAddArticulo()" id="btn-add-articulo">+ Agregar artículo</button>
+  </div>
+
+  <!-- HALL OF FAME -->
+  <div id="view-hof" class="view">
+    <div id="hof-list"></div>
   </div>
 </div>
 
@@ -376,7 +429,7 @@ async function sbDelete(table, match) {
   if (!r.ok) throw new Error(await r.text());
 }
 
-var state = { players:{a:'',s:'',avatarA:null,avatarS:null}, sessions:[], tournaments:[], years:[], reglamento:[] };
+var state = { players:{a:'',s:'',avatarA:null,avatarS:null}, sessions:[], tournaments:[], years:[], reglamento:[], hof:[] };
 var viewYear = String(new Date().getFullYear());
 var viewTournamentId = null;
 var matchCount = 0, matchData = {};
@@ -407,6 +460,7 @@ async function loadAll() {
     state.tournaments = await sbGet('tournaments');
     state.sessions = await sbGet('sessions', 'order=created_at.asc');
     await loadReglamento();
+    await loadHof();
 
     var ySet = {};
     state.tournaments.forEach(function(t){ ySet[t.year]=true; });
@@ -473,9 +527,11 @@ function renderAll() {
   renderTournamentTabs();
   renderTournamentDetail();
   renderCargarTournamentSelector();
+  renderHofTournamentSelector();
   renderYears();
   renderTournaments();
   renderSessionsList();
+  renderHofConfig();
 }
 
 // ── TOURNAMENT TABS (pestaña Torneo) ─────────────────────────────
@@ -883,9 +939,10 @@ function switchTab(name,btn){
   if(btn)btn.classList.add('active');
   document.getElementById('view-'+name).classList.add('active');
   if(name==='reglamento') renderReglamento();
+  if(name==='hof') renderHof();
 }
 function switchTabById(name){
-  var names=['torneo','cargar','config','reglamento'];
+  var names=['torneo','cargar','config','reglamento','hof'];
   document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',names[i]===name);});
   document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
   document.getElementById('view-'+name).classList.add('active');
@@ -1052,6 +1109,141 @@ function launchFireworks(winners){
     else ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
   requestAnimationFrame(animate);
+}
+
+// ── HALL OF FAME ─────────────────────────────────────────────────
+async function loadHof(){
+  try{ state.hof = await sbGet('hall_of_fame','order=created_at.desc'); }
+  catch(e){ state.hof=[]; console.error(e); }
+}
+
+function renderHofTournamentSelector(){
+  var sel=document.getElementById('hof-tournament');
+  if(!sel)return;
+  var prev=sel.value;
+  sel.innerHTML='';
+  if(!state.tournaments.length){
+    sel.innerHTML='<option value="">— No hay torneos —</option>'; return;
+  }
+  state.tournaments.forEach(function(t){
+    var o=document.createElement('option'); o.value=t.id;
+    o.textContent=(t.icon||'🏆')+' '+t.name+' ('+t.year+')';
+    if(t.id===prev) o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+function hofPreviewFile(input){
+  var file=input.files[0]; if(!file)return;
+  var wrap=document.getElementById('hof-preview-wrap');
+  var reader=new FileReader();
+  reader.onload=function(e){
+    wrap.innerHTML='<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover;" />';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveHofPhoto(){
+  var tid=document.getElementById('hof-tournament').value;
+  var caption=(document.getElementById('hof-caption').value||'').trim();
+  var input=document.getElementById('hof-file-input');
+  var file=input.files[0];
+  if(!tid){showToast('Seleccioná un torneo',true);return;}
+  if(!file){showToast('Elegí una foto',true);return;}
+  if(file.size>5*1024*1024){showToast('La foto es muy grande (máx 5MB)',true);return;}
+  var btn=document.querySelector('#view-cargar .btn-primary:last-child');
+  var ext=file.name.split('.').pop();
+  var path='hof/hof-'+Date.now()+'.'+ext;
+  try{
+    var r=await fetch(SB_URL+'/storage/v1/object/avatars/'+path,{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':file.type,'x-upsert':'true'},
+      body:file
+    });
+    if(!r.ok) throw new Error(await r.text());
+    var url=SB_URL+'/storage/v1/object/public/avatars/'+path+'?t='+Date.now();
+    var id='hof-'+Date.now();
+    await sbInsert('hall_of_fame',{id:id,tournament_id:tid,photo_url:url,caption:caption||null});
+    state.hof.unshift({id:id,tournament_id:tid,photo_url:url,caption:caption||null,created_at:new Date().toISOString()});
+    // reset form
+    input.value='';
+    document.getElementById('hof-caption').value='';
+    document.getElementById('hof-caption-count').textContent='(0/80)';
+    document.getElementById('hof-preview-wrap').innerHTML='<div class="hof-preview-placeholder"><span>🖼️</span>Tocá para elegir una foto</div>';
+    renderHofConfig();
+    showToast('Foto agregada al Hall of Fame ✓');
+  }catch(e){ showToast('Error al subir la foto',true); console.error(e); }
+}
+
+function renderHof(){
+  var container=document.getElementById('hof-list');
+  container.innerHTML='';
+  if(!state.hof||!state.hof.length){
+    container.innerHTML='<div class="hof-empty"><div class="hof-empty-icon">🏆</div>Todavía no hay fotos.<br>Subí la primera desde la pestaña Cargar.</div>';
+    return;
+  }
+  // group by tournament
+  var grouped={};
+  var order=[];
+  state.hof.forEach(function(p){
+    var tid=p.tournament_id||'sin-torneo';
+    if(!grouped[tid]){grouped[tid]=[];order.push(tid);}
+    grouped[tid].push(p);
+  });
+  order.forEach(function(tid){
+    var t=state.tournaments.find(function(x){return x.id===tid;});
+    var tname=t?(( t.icon||'🏆')+' '+t.name+' · '+t.year):'Sin torneo';
+    var section=document.createElement('div');
+    section.style.cssText='margin-bottom:20px;';
+    var hdr=document.createElement('div');
+    hdr.style.cssText='font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;padding:0 2px;';
+    hdr.textContent=tname;
+    section.appendChild(hdr);
+    var grid=document.createElement('div');
+    grid.className='hof-grid';
+    grouped[tid].forEach(function(p){
+      var card=document.createElement('div');
+      card.className='hof-card';
+      card.innerHTML='<img src="'+p.photo_url+'" loading="lazy" />'
+        +(p.caption?'<div class="hof-card-caption">'+escHtml(p.caption)+'</div>':'');
+      grid.appendChild(card);
+    });
+    section.appendChild(grid);
+    container.appendChild(section);
+  });
+}
+
+function renderHofConfig(){
+  var list=document.getElementById('hof-config-list');
+  if(!list)return;
+  list.innerHTML='';
+  if(!state.hof||!state.hof.length){
+    list.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--text3);padding:8px 0;">No hay fotos todavía</div>';
+    return;
+  }
+  state.hof.forEach(function(p){
+    var t=state.tournaments.find(function(x){return x.id===p.tournament_id;});
+    var tname=t?t.name:'Sin torneo';
+    var d=document.createElement('div');
+    d.className='hof-config-card';
+    d.innerHTML='<img class="hof-config-thumb" src="'+p.photo_url+'" />'
+      +'<div class="hof-config-info">'
+      +'<div class="hof-config-caption">'+(p.caption?escHtml(p.caption):'Sin pie de foto')+'</div>'
+      +'<div class="hof-config-sub">'+tname+'</div>'
+      +'</div>'
+      +'<button class="btn-del-sm" onclick="deleteHofPhoto(\''+p.id+'\')">🗑</button>';
+    list.appendChild(d);
+  });
+}
+
+async function deleteHofPhoto(id){
+  if(!confirm('¿Seguro que querés eliminar esta foto?'))return;
+  try{
+    await sbDelete('hall_of_fame','id=eq.'+id);
+    state.hof=state.hof.filter(function(p){return p.id!==id;});
+    renderHofConfig();
+    showToast('Foto eliminada');
+  }catch(e){ showToast('Error al eliminar',true); console.error(e); }
 }
 
 // ── AVATAR UPLOAD ────────────────────────────────────────────────
