@@ -1151,20 +1151,17 @@ async function saveHofPhoto(){
   if(!tid){showToast('Seleccioná un torneo',true);return;}
   if(!file){showToast('Elegí una foto',true);return;}
   if(file.size>5*1024*1024){showToast('La foto es muy grande (máx 5MB)',true);return;}
-  var btn=document.querySelector('#view-cargar .btn-primary:last-child');
-  var ext=file.name.split('.').pop();
-  var path='hof/hof-'+Date.now()+'.'+ext;
   try{
-    var r=await fetch(SB_URL+'/storage/v1/object/avatars/'+path,{
-      method:'POST',
-      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':file.type,'x-upsert':'true'},
-      body:file
+    // convert to base64
+    var base64=await new Promise(function(res,rej){
+      var reader=new FileReader();
+      reader.onload=function(e){res(e.target.result);};
+      reader.onerror=rej;
+      reader.readAsDataURL(file);
     });
-    if(!r.ok) throw new Error(await r.text());
-    var url=SB_URL+'/storage/v1/object/public/avatars/'+path+'?t='+Date.now();
     var id='hof-'+Date.now();
-    await sbInsert('hall_of_fame',{id:id,tournament_id:tid,photo_url:url,caption:caption||null});
-    state.hof.unshift({id:id,tournament_id:tid,photo_url:url,caption:caption||null,created_at:new Date().toISOString()});
+    await sbInsert('hall_of_fame',{id:id,tournament_id:tid,photo_url:'',photo_data:base64,caption:caption||null});
+    state.hof.unshift({id:id,tournament_id:tid,photo_url:'',photo_data:base64,caption:caption||null,created_at:new Date().toISOString()});
     // reset form
     input.value='';
     document.getElementById('hof-caption').value='';
@@ -1204,7 +1201,8 @@ function renderHof(){
     grouped[tid].forEach(function(p){
       var card=document.createElement('div');
       card.className='hof-card';
-      card.innerHTML='<img src="'+p.photo_url+'" loading="lazy" />'
+      var src=p.photo_data||p.photo_url;
+      card.innerHTML='<img src="'+src+'" loading="lazy" />'
         +(p.caption?'<div class="hof-card-caption">'+escHtml(p.caption)+'</div>':'');
       grid.appendChild(card);
     });
@@ -1224,9 +1222,10 @@ function renderHofConfig(){
   state.hof.forEach(function(p){
     var t=state.tournaments.find(function(x){return x.id===p.tournament_id;});
     var tname=t?t.name:'Sin torneo';
+    var src=p.photo_data||p.photo_url;
     var d=document.createElement('div');
     d.className='hof-config-card';
-    d.innerHTML='<img class="hof-config-thumb" src="'+p.photo_url+'" />'
+    d.innerHTML='<img class="hof-config-thumb" src="'+src+'" />'
       +'<div class="hof-config-info">'
       +'<div class="hof-config-caption">'+(p.caption?escHtml(p.caption):'Sin pie de foto')+'</div>'
       +'<div class="hof-config-sub">'+tname+'</div>'
