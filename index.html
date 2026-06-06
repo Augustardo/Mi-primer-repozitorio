@@ -1152,17 +1152,21 @@ async function saveHofPhoto(){
   if(!file){showToast('Elegí una foto',true);return;}
   if(file.size>5*1024*1024){showToast('La foto es muy grande (máx 5MB)',true);return;}
   try{
-    // convert to base64
     var base64=await new Promise(function(res,rej){
       var reader=new FileReader();
       reader.onload=function(e){res(e.target.result);};
       reader.onerror=rej;
       reader.readAsDataURL(file);
     });
-    var id='hof-'+Date.now();
-    await sbInsert('hall_of_fame',{id:id,tournament_id:tid,photo_url:'',photo_data:base64,caption:caption||null});
-    state.hof.unshift({id:id,tournament_id:tid,photo_url:'',photo_data:base64,caption:caption||null,created_at:new Date().toISOString()});
-    // reset form
+    var res=await fetch(SB_URL+'/rest/v1/hall_of_fame',{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+      body:JSON.stringify({tournament_id:tid,photo_url:'',photo_data:base64,caption:caption||null})
+    });
+    if(!res.ok) throw new Error(await res.text());
+    var rows=await res.json();
+    var newRecord=rows[0]||{tournament_id:tid,photo_url:'',photo_data:base64,caption:caption||null,created_at:new Date().toISOString()};
+    state.hof.unshift(newRecord);
     input.value='';
     document.getElementById('hof-caption').value='';
     document.getElementById('hof-caption-count').textContent='(0/80)';
